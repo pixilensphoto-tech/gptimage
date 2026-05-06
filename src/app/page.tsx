@@ -17,6 +17,16 @@ type GenerateResponse = {
   prompt: string;
 };
 
+type JobResponse = {
+  id?: string;
+  jobId?: string;
+  status: "queued" | "running" | "succeeded" | "failed";
+  progress: number;
+  message: string;
+  error?: string;
+  result?: Omit<GenerateResponse, "id">;
+};
+
 const examples = [
   "Editorial portrait of a founder in a sunlit studio, cinematic realism, 85mm lens",
   "Luxury skincare bottle on wet stone, soft reflections, premium campaign lighting",
@@ -72,6 +82,8 @@ export default function Home() {
   const [styleFiles, setStyleFiles] = useState<PreviewFile[]>([]);
   const [characterFiles, setCharacterFiles] = useState<PreviewFile[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateResponse | null>(null);
 
@@ -109,11 +121,36 @@ export default function Home() {
     }
   }
 
+  async function pollJob(jobId: string) {
+    if (!jobId) throw new Error("Generation job did not start");
+
+    for (let attempt = 0; attempt < 180; attempt += 1) {
+      const response = await fetch(`/api/generate/${jobId}`, { cache: "no-store" });
+      const data = (await response.json()) as JobResponse;
+      if (!response.ok) throw new Error(data.error ?? "Could not check generation progress");
+
+      setProgress(Math.max(8, Math.min(100, data.progress)));
+      setStatusMessage(data.message);
+
+      if (data.status === "succeeded" && data.result) {
+        setResult({ id: jobId, ...data.result });
+        return;
+      }
+      if (data.status === "failed") throw new Error(data.error ?? "Image generation failed");
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+
+    throw new Error("Generation is taking longer than expected. Please try again.");
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canGenerate) return;
 
     setIsGenerating(true);
+    setProgress(0);
+    setStatusMessage("Starting generation");
     setError(null);
     setResult(null);
 
@@ -123,12 +160,14 @@ export default function Home() {
     characterFiles.forEach(({ file }) => formData.append("characterImages", file));
 
     try {
+      setProgress(5);
+      setStatusMessage("Uploading request");
       const response = await fetch("/api/generate", { method: "POST", body: formData });
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data?.error ?? "Image generation failed");
       }
-      setResult(data);
+      await pollJob(data.jobId);
     } catch (generationError) {
       setError(generationError instanceof Error ? generationError.message : "Image generation failed");
     } finally {
@@ -190,8 +229,20 @@ export default function Home() {
               disabled={!canGenerate}
               className="mt-8 flex w-full items-center justify-center rounded-2xl bg-cyan-300 px-6 py-4 text-base font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
             >
+              <span className={isGenerating ? "mr-3 h-5 w-5 animate-spin rounded-full border-2 border-slate-950/20 border-t-slate-950" : "hidden"} />
               {isGenerating ? "Generating image..." : `Generate image${referenceCount ? ` with ${referenceCount} reference${referenceCount > 1 ? "s" : ""}` : ""}`}
             </button>
+            {isGenerating ? (
+              <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4">
+                <div className="mb-2 flex items-center justify-between text-sm text-cyan-100">
+                  <span>{statusMessage || "Working"}</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                  <div className="h-full rounded-full bg-cyan-300 transition-all duration-500" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+            ) : null}
             {error ? <p className="mt-4 rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">{error}</p> : null}
           </section>
 
@@ -232,6 +283,15 @@ export default function Home() {
           <div className="mt-6 flex min-h-[28rem] items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
             {result ? (
               <img src={`data:${result.mimeType};base64,${result.image}`} alt={result.prompt} className="max-h-[70vh] w-full object-contain" />
+            ) : isGenerating ? (
+              <div className="flex max-w-md flex-col items-center px-6 text-center text-slate-300">
+                <div className="mb-5 h-14 w-14 animate-spin rounded-full border-4 border-cyan-300/20 border-t-cyan-200" />
+                <p className="text-lg font-semibold text-white">Generating your image</p>
+                <p className="mt-2 text-sm text-slate-400">{statusMessage || "This can take up to a minute for reference images."}</p>
+                <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div className="h-full rounded-full bg-cyan-300 transition-all duration-500" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
             ) : (
               <div className="max-w-md px-6 text-center text-slate-400">
                 Your generated image will appear here. Add a prompt and optional references to begin.
