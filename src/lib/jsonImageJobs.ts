@@ -35,14 +35,14 @@ export function getJsonImageJob(id: string) {
   return jobs.get(id);
 }
 
-export function createJsonImageJob(prompt: string, sourceImage: string) {
+export function createJsonImageJob(prompt: string, sourceImage?: string) {
   const trimmedPrompt = prompt.trim();
   if (trimmedPrompt.length < 3) return { error: "prompt is required", status: 400 } as const;
   if (trimmedPrompt.length > 4000) return { error: "prompt must be 4000 characters or fewer", status: 400 } as const;
 
-  const parsedImage = parseSourceImage(sourceImage.trim());
-  if (!parsedImage) return { error: "sourceImage must be a valid base64 image or data URL", status: 400 } as const;
-  if (parsedImage.bytes.length > maxSourceImageBytes) return { error: "sourceImage must be 8MB or smaller after base64 decoding", status: 400 } as const;
+  const parsedImage = sourceImage?.trim() ? parseSourceImage(sourceImage.trim()) : null;
+  if (sourceImage?.trim() && !parsedImage) return { error: "sourceImage must be a valid base64 image or data URL", status: 400 } as const;
+  if (parsedImage && parsedImage.bytes.length > maxSourceImageBytes) return { error: "sourceImage must be 8MB or smaller after base64 decoding", status: 400 } as const;
 
   const id = crypto.randomUUID();
   const now = Date.now();
@@ -80,11 +80,11 @@ function setJob(id: string, updates: Partial<JsonImageJob>) {
   jobs.set(id, { ...current, ...updates, updatedAt: Date.now() });
 }
 
-async function runJsonImageJob(id: string, prompt: string, sourceImage: SourceImage) {
+async function runJsonImageJob(id: string, prompt: string, sourceImage: SourceImage | null) {
   try {
-    setJob(id, { status: "running", progress: 24, message: "Sending source image to GPT Image" });
+    setJob(id, { status: "running", progress: 24, message: sourceImage ? "Sending source image to GPT Image" : "Sending prompt to GPT Image" });
     const heartbeat = startProgressHeartbeat(id);
-    const result = await callAzureImageEdit(prompt, sourceImage);
+    const result = sourceImage ? await callAzureImageEdit(prompt, sourceImage) : await callAzureImageGeneration(prompt);
     clearInterval(heartbeat);
     if ("error" in result) throw new Error(result.error ?? "Image generation failed");
 
@@ -123,6 +123,25 @@ function startProgressHeartbeat(id: string) {
       message: job.progress > 68 ? "Still rendering details" : job.message,
     });
   }, 2500);
+}
+
+async function callAzureImageGeneration(prompt: string) {
+  const endpoint = process.env.AZURE_OPENAI_ENDPOINT?.replace(/\/$/, "");
+  const apiKey = process.env.AZURE_OPENAI_API_KEY;
+  const deployment = process.env.AZURE_OPENAI_DEPLOYMENT ?? "gpt-image-2";
+  const apiVersion = process.env.AZURE_OPENAI_API_VERSION ?? "2025-04-01-preview";
+
+  if (!endpoint || !apiKey) return { error: "Azure image generation is not configured", status: 500 } as const;
+
+  const response = await fetch(`${endpoint}/openai/deployments/${deployment}/images/generations?api-version=${apiVersion}`, {
+    method: "POST",
+    headers: { "api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, n: 1, size: "1024x1536", output_format: "png" }),
+  });
+
+  const data = (await response.json()) as AzureImageResponse;
+  if (!response.ok) return { error: data.error?.message ?? "Azure image generation failed", status: response.status } as const;
+  return { data } as const;
 }
 
 async function callAzureImageEdit(prompt: string, sourceImage: SourceImage) {

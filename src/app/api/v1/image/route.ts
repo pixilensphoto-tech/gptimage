@@ -20,8 +20,6 @@ export async function POST(request: NextRequest) {
   const auth = validateJsonApiKey(payload.apiKey);
   if ("error" in auth) return jsonError(auth.error ?? "Unauthorized", auth.status);
 
-  if (!payload.sourceImage?.trim()) return jsonError("sourceImage is required as a base64 string or data URL");
-
   const result = createJsonImageJob(payload.prompt ?? "", payload.sourceImage);
   if ("error" in result) return jsonError(result.error ?? "Image generation failed", result.status);
 
