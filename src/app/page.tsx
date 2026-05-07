@@ -442,7 +442,7 @@ export default function Home() {
             />
             <UploadPanel
               title="Character references"
-              description="Use these to preserve a person, character, outfit, product, or recurring subject."
+              description="Use these as the full person reference: face, identity, body build, proportions, posture, and recognizable details."
               files={characterFiles}
               onAdd={(event) => addFiles("character", event)}
               onRemove={(id) => removeFile("character", id)}

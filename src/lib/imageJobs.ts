@@ -197,7 +197,7 @@ function buildPrompt(settings: PromptSettings, styleCount: number, characterCoun
   const referenceInstructions: string[] = [];
   if (styleCount > 0 && characterCount > 0) {
     referenceInstructions.push(
-      `Reverse-engineer the ${styleCount} style reference image${styleCount > 1 ? "s" : ""}: copy its pose, scene, lighting, setting, camera angle, composition, mood, color grade, and wardrobe/styling language. Do not perform a face swap and do not paste the character into the original photo. Generate a new original image that follows the style reference structure while using the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} for the person identity, face, hair, skin tone, body shape, proportions, and recognizable character details. The final person should be the character reference person recreated naturally inside the reverse-engineered style-reference pose and scene.`
+      `First analyze and describe the full person in the ${characterCount} character reference image${characterCount > 1 ? "s" : ""}: face, hair, skin tone, age range, body build, height impression, shoulder width, torso shape, body proportions, posture habits, clothing fit, and other recognizable full-body details. Then reverse-engineer the ${styleCount} style reference image${styleCount > 1 ? "s" : ""}: copy its pose, scene, lighting, setting, camera angle, composition, mood, color grade, and wardrobe/styling language. Generate a new original photo of the character-reference person with their full body/build/proportions recreated, placed into the style-reference pose and scene. Do not do a face swap, head swap, or paste the character face onto the style-reference body. Do not preserve the original body/build/person from the style reference. The final body, face, and identity must all come from the character reference person while the pose/scene/lighting/wardrobe style comes from the style reference.`
     );
   } else if (styleCount > 0) {
     referenceInstructions.push(
@@ -205,7 +205,7 @@ function buildPrompt(settings: PromptSettings, styleCount: number, characterCoun
     );
   } else if (characterCount > 0) {
     referenceInstructions.push(
-      `Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} to preserve identity, face, hair, body proportions, wardrobe cues, and recognizable subject details.`
+      `Analyze the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} as the full person reference: preserve identity, face, hair, skin tone, body build, body shape, proportions, posture, clothing fit, and recognizable full-body subject details. Do not reduce the reference to only the face.`
     );
   }
   if (referenceInstructions.length > 0) sections.push(section("Reference-image instructions", referenceInstructions.join(" "))!);
