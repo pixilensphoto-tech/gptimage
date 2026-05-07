@@ -144,7 +144,7 @@ function SelectField({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none ring-cyan-300/40 transition focus:ring-4"
+        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 py-3 pl-4 pr-12 text-sm text-white outline-none ring-cyan-300/40 transition focus:ring-4"
       >
         <option value="">Auto / no preference</option>
         {options.map((option) => (
