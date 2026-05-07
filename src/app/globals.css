@@ -39,6 +39,7 @@ textarea {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  display: inline-block;
   filter: drop-shadow(0 0 18px rgba(103, 232, 249, 0.28));
   animation: logo-gradient-flow 5s ease-in-out infinite, logo-float-glow 3.5s ease-in-out infinite;
 }

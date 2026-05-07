@@ -187,7 +187,7 @@ export default function Home() {
             </div>
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.35em] text-cyan-200">Pixilens</p>
-              <h1 className="animated-logo-text text-3xl font-black tracking-tight md:text-5xl">GPT-2 Image Creator</h1>
+              <h1 className="animated-logo-text pb-2 text-3xl font-black leading-[1.18] tracking-tight md:text-5xl">GPT-2 Image Creator</h1>
             </div>
           </div>
           <div className="hidden h-10 w-10 animate-pulse rounded-full bg-gradient-to-br from-cyan-300 via-fuchsia-300 to-violet-400 blur-sm md:block" />
