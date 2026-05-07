@@ -236,7 +236,7 @@ function UploadPanel({
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
-  const [aspectRatio, setAspectRatio] = useState(aspectRatioOptions[0]);
+  const [aspectRatio, setAspectRatio] = useState(aspectRatioOptions[2]);
   const [quality, setQuality] = useState(qualityOptions[0]);
   const [scene, setScene] = useState("");
   const [subject, setSubject] = useState("");
