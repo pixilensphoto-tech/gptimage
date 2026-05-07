@@ -157,6 +157,39 @@ function SelectField({
   );
 }
 
+const maxReferenceBytes = 7.5 * 1024 * 1024;
+
+async function compressImageIfNeeded(file: File) {
+  if (file.size <= maxReferenceBytes || !file.type.startsWith("image/")) return file;
+
+  const bitmap = await createImageBitmap(file);
+  let maxDimension = 2200;
+  let quality = 0.86;
+  let bestFile = file;
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (!context) break;
+    context.drawImage(bitmap, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (!blob) break;
+    bestFile = new File([blob], file.name.replace(/\.[^.]+$/, "") + "-compressed.jpg", { type: "image/jpeg", lastModified: Date.now() });
+    if (bestFile.size <= maxReferenceBytes) break;
+    quality -= 0.08;
+    maxDimension = Math.round(maxDimension * 0.82);
+  }
+
+  bitmap.close();
+  return bestFile;
+}
+
 function UploadPanel({
   title,
   description,
@@ -178,7 +211,7 @@ function UploadPanel({
       </div>
       <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-cyan-300/40 bg-cyan-300/[0.04] px-4 py-7 text-center transition hover:border-cyan-200 hover:bg-cyan-300/[0.08]">
         <span className="text-sm font-medium text-cyan-100">Upload one or more images</span>
-        <span className="mt-1 text-xs text-slate-400">PNG, JPEG, or WebP</span>
+        <span className="mt-1 text-xs text-slate-400">PNG, JPEG, or WebP. Large images are compressed automatically.</span>
         <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={onAdd} />
       </label>
       {files.length > 0 ? (
@@ -223,20 +256,25 @@ export default function Home() {
   const canGenerate = (prompt.trim().length > 0 || styleFiles.length > 0) && !isGenerating;
   const downloadName = result ? `gptimage-${result.id}.png` : "gptimage.png";
 
-  function addFiles(group: UploadGroup, event: ChangeEvent<HTMLInputElement>) {
+  async function addFiles(group: UploadGroup, event: ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(event.target.files ?? []);
-    const previews = selected.map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-      id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
-    }));
+    event.target.value = "";
+    const previews = await Promise.all(
+      selected.map(async (file) => {
+        const compressed = await compressImageIfNeeded(file);
+        return {
+          file: compressed,
+          url: URL.createObjectURL(compressed),
+          id: `${compressed.name}-${compressed.lastModified}-${crypto.randomUUID()}`,
+        };
+      })
+    );
 
     if (group === "style") {
       setStyleFiles((current) => [...current, ...previews]);
     } else {
       setCharacterFiles((current) => [...current, ...previews]);
     }
-    event.target.value = "";
   }
 
   function removeFile(group: UploadGroup, id: string) {
