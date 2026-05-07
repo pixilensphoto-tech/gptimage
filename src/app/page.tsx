@@ -179,25 +179,18 @@ export default function Home() {
     <main className="min-h-screen overflow-hidden bg-[#050816] text-white">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(56,189,248,0.22),transparent_28%),radial-gradient(circle_at_85%_5%,rgba(168,85,247,0.26),transparent_28%),radial-gradient(circle_at_50%_90%,rgba(20,184,166,0.18),transparent_30%)]" />
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-10 lg:px-8">
-        <header className="flex flex-col gap-6 rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 shadow-2xl shadow-black/30 backdrop-blur md:p-10">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-            <div>
-              <div className="mb-5 inline-flex rounded-full border border-cyan-300/30 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-100">
-                Pixilens GPT Image Studio
-              </div>
-              <h1 className="max-w-4xl text-5xl font-semibold tracking-tight text-white md:text-7xl">
-                Create campaign-ready images with prompt, style, and character references.
-              </h1>
+        <header className="flex items-center justify-between gap-4 rounded-[2rem] border border-white/10 bg-white/[0.06] px-6 py-5 shadow-2xl shadow-black/30 backdrop-blur md:px-8">
+          <div className="flex items-center gap-4">
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-300 text-xl font-black text-slate-950 shadow-lg shadow-cyan-950/30">
+              <span className="absolute inset-0 animate-ping rounded-2xl bg-cyan-300/30" />
+              <span className="relative">AI</span>
             </div>
-            <p className="max-w-xl text-lg leading-8 text-slate-300">
-              Upload references for visual style or character identity, describe the image you want, and generate a fresh result with Azure GPT Image.
-            </p>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.35em] text-cyan-200">Pixilens</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">GPT-2 Image Creator</h1>
+            </div>
           </div>
-          <div className="grid gap-3 text-sm text-slate-300 md:grid-cols-3">
-            <div className="rounded-2xl bg-black/20 p-4">Prompt-first composition control</div>
-            <div className="rounded-2xl bg-black/20 p-4">Multi-image style and character references</div>
-            <div className="rounded-2xl bg-black/20 p-4">Session-only uploads and outputs</div>
-          </div>
+          <div className="hidden h-10 w-10 animate-pulse rounded-full bg-gradient-to-br from-cyan-300 via-fuchsia-300 to-violet-400 blur-sm md:block" />
         </header>
 
         <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
