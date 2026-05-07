@@ -435,7 +435,7 @@ export default function Home() {
           <section className="grid gap-6">
             <UploadPanel
               title="Style references"
-              description="Use these for style, composition, environment, pose, and the default person/subject to replace when character references are uploaded."
+              description="Use these to reverse-engineer pose, scene, lighting, setting, wardrobe, camera, and composition for a new image."
               files={styleFiles}
               onAdd={(event) => addFiles("style", event)}
               onRemove={(id) => removeFile("style", id)}

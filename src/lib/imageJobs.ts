@@ -197,11 +197,11 @@ function buildPrompt(settings: PromptSettings, styleCount: number, characterCoun
   const referenceInstructions: string[] = [];
   if (styleCount > 0 && characterCount > 0) {
     referenceInstructions.push(
-      `Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} as the source for the overall style, composition, environment, time of day, lighting, camera angle, pose, layout, and the existing person/subject placement. Replace the person/subject from the style reference with the person/character from the ${characterCount} character reference image${characterCount > 1 ? "s" : ""}. Preserve the character reference identity, face, hair, body proportions, outfit cues, and recognizable details while matching the style reference scene and composition. Do not keep the original person identity from the style image.`
+      `Reverse-engineer the ${styleCount} style reference image${styleCount > 1 ? "s" : ""}: copy its pose, scene, lighting, setting, camera angle, composition, mood, color grade, and wardrobe/styling language. Do not perform a face swap and do not paste the character into the original photo. Generate a new original image that follows the style reference structure while using the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} for the person identity, face, hair, skin tone, body shape, proportions, and recognizable character details. The final person should be the character reference person recreated naturally inside the reverse-engineered style-reference pose and scene.`
     );
   } else if (styleCount > 0) {
     referenceInstructions.push(
-      `Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} as the primary guide for visual style, composition, environment, lighting, color palette, pose, layout, and the person/subject in the image unless the other instructions say otherwise.`
+      `Reverse-engineer the ${styleCount} style reference image${styleCount > 1 ? "s" : ""}: use it as the primary guide for pose, scene, lighting, setting, wardrobe/styling language, composition, color palette, camera angle, and mood. Generate a new original image based on those visual decisions rather than copying or editing the original photo directly.`
     );
   } else if (characterCount > 0) {
     referenceInstructions.push(
