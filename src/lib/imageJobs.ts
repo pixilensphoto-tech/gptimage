@@ -33,15 +33,24 @@ export type ImageJob = {
 
 type JobInput = {
   prompt: string;
+  aspectRatio: string;
+  quality: string;
+  scene: string;
+  subject: string;
+  importantDetails: string;
+  useCase: string;
+  constraints: string;
   styleImages: StoredImage[];
   characterImages: StoredImage[];
 };
+
+type PromptSettings = Pick<JobInput, "prompt" | "aspectRatio" | "quality" | "scene" | "subject" | "importantDetails" | "useCase" | "constraints">;
 
 const jobs = new Map<string, ImageJob>();
 const requestTimes: number[] = [];
 
 const maxUploadMb = Number(process.env.MAX_UPLOAD_MB ?? "8");
-const maxReferenceImages = Number(process.env.MAX_REFERENCE_IMAGES ?? "6");
+const maxReferenceImages = Number(process.env.MAX_REFERENCE_IMAGES ?? "12");
 const generationRateLimitPerMinute = Number(process.env.GENERATION_RATE_LIMIT_PER_MINUTE ?? "8");
 const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
 
@@ -61,12 +70,20 @@ export function getJob(id: string) {
 
 export async function createImageJob(formData: FormData) {
   const prompt = String(formData.get("prompt") ?? "").trim();
-  if (prompt.length < 3) return { error: "Enter a more detailed prompt.", status: 400 } as const;
-  if (prompt.length > 4000) return { error: "Prompt is too long. Keep it under 4000 characters.", status: 400 } as const;
+  const aspectRatio = String(formData.get("aspectRatio") ?? "").trim();
+  const quality = String(formData.get("quality") ?? "").trim();
+  const scene = String(formData.get("scene") ?? "").trim();
+  const subject = String(formData.get("subject") ?? "").trim();
+  const importantDetails = String(formData.get("importantDetails") ?? "").trim();
+  const useCase = String(formData.get("useCase") ?? "").trim();
+  const constraints = String(formData.get("constraints") ?? "").trim();
 
   const styleFiles = formData.getAll("styleImages").filter((item): item is File => item instanceof File && item.size > 0);
   const characterFiles = formData.getAll("characterImages").filter((item): item is File => item instanceof File && item.size > 0);
   const allFiles = [...styleFiles, ...characterFiles];
+
+  if (prompt.length < 3 && styleFiles.length === 0) return { error: "Enter a prompt or upload a style reference image.", status: 400 } as const;
+  if (prompt.length > 4000) return { error: "Prompt is too long. Keep it under 4000 characters.", status: 400 } as const;
 
   if (allFiles.length > maxReferenceImages) return { error: `Upload at most ${maxReferenceImages} reference images.`, status: 400 } as const;
   for (const file of allFiles) {
@@ -76,6 +93,13 @@ export async function createImageJob(formData: FormData) {
 
   const input: JobInput = {
     prompt,
+    aspectRatio,
+    quality,
+    scene,
+    subject,
+    importantDetails,
+    useCase,
+    constraints,
     styleImages: await Promise.all(styleFiles.map(fileToStoredImage)),
     characterImages: await Promise.all(characterFiles.map(fileToStoredImage)),
   };
@@ -113,12 +137,13 @@ function setJob(id: string, updates: Partial<ImageJob>) {
 async function runJob(id: string, input: JobInput) {
   try {
     setJob(id, { status: "running", progress: 18, message: "Preparing prompt and references" });
-    const finalPrompt = buildPrompt(input.prompt, input.styleImages.length, input.characterImages.length);
+    const finalPrompt = buildPrompt(input, input.styleImages.length, input.characterImages.length);
+    const size = resolveAzureSize(input.aspectRatio, input.quality);
     const allImages = [...input.styleImages, ...input.characterImages];
 
     setJob(id, { progress: 36, message: allImages.length ? "Sending references to Azure GPT Image" : "Sending prompt to Azure GPT Image" });
     const heartbeat = startProgressHeartbeat(id);
-    const result = allImages.length > 0 ? await callAzureEdits(finalPrompt, allImages) : await callAzureGenerations(finalPrompt);
+    const result = allImages.length > 0 ? await callAzureEdits(finalPrompt, allImages, size) : await callAzureGenerations(finalPrompt, size);
     clearInterval(heartbeat);
     if ("error" in result) throw new Error(result.error ?? "Image generation failed");
 
@@ -159,14 +184,54 @@ function startProgressHeartbeat(id: string) {
   }, 2500);
 }
 
-function buildPrompt(prompt: string, styleCount: number, characterCount: number) {
-  const sections = [prompt];
-  if (styleCount > 0) sections.push(`Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} for visual language, lighting, color palette, texture, and mood.`);
-  if (characterCount > 0) sections.push(`Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} to preserve identity, wardrobe, proportions, or product details where relevant.`);
+function buildPrompt(settings: PromptSettings, styleCount: number, characterCount: number) {
+  const sections = [
+    section("Scene", settings.scene),
+    section("Subject", settings.subject),
+    section("Important details", settings.importantDetails),
+    section("Use case", settings.useCase),
+    section("Constraints", settings.constraints),
+    section("User freeform prompt / extra instructions", settings.prompt),
+  ].filter(Boolean) as string[];
+
+  const referenceInstructions: string[] = [];
+  if (styleCount > 0 && characterCount > 0) {
+    referenceInstructions.push(
+      `Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} as the source for the overall style, composition, environment, time of day, lighting, camera angle, pose, layout, and the existing person/subject placement. Replace the person/subject from the style reference with the person/character from the ${characterCount} character reference image${characterCount > 1 ? "s" : ""}. Preserve the character reference identity, face, hair, body proportions, outfit cues, and recognizable details while matching the style reference scene and composition. Do not keep the original person identity from the style image.`
+    );
+  } else if (styleCount > 0) {
+    referenceInstructions.push(
+      `Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} as the primary guide for visual style, composition, environment, lighting, color palette, pose, layout, and the person/subject in the image unless the other instructions say otherwise.`
+    );
+  } else if (characterCount > 0) {
+    referenceInstructions.push(
+      `Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} to preserve identity, face, hair, body proportions, wardrobe cues, and recognizable subject details.`
+    );
+  }
+  if (referenceInstructions.length > 0) sections.push(section("Reference-image instructions", referenceInstructions.join(" "))!);
+
+  const format = [settings.aspectRatio ? `Format: ${settings.aspectRatio}.` : "", settings.quality ? `Quality/detail target: ${settings.quality}.` : ""].filter(Boolean).join(" ");
+  if (format) sections.push(section("Aspect ratio and quality instructions", format)!);
+
   return sections.join("\n\n");
 }
 
-async function callAzureGenerations(prompt: string) {
+function section(title: string, value: string) {
+  const trimmed = value.trim();
+  return trimmed ? `${title}:\n${trimmed}` : null;
+}
+
+function resolveAzureSize(aspectRatio: string, quality: string) {
+  const wantsPortrait = /9:16|4:5|2:3/i.test(aspectRatio);
+  const wantsLandscape = /16:9|3:2|3:1|21:9|1\.91:1/i.test(aspectRatio);
+  const wantsLarge = /2K|4K/i.test(quality);
+
+  if (wantsPortrait) return wantsLarge ? "1024x1536" : "1024x1536";
+  if (wantsLandscape) return wantsLarge ? "1536x1024" : "1536x1024";
+  return wantsLarge ? "1024x1024" : "1024x1024";
+}
+
+async function callAzureGenerations(prompt: string, size: string) {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT?.replace(/\/$/, "");
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
   const deployment = process.env.AZURE_OPENAI_DEPLOYMENT ?? "gpt-image-2";
@@ -177,7 +242,7 @@ async function callAzureGenerations(prompt: string) {
   const response = await fetch(`${endpoint}/openai/deployments/${deployment}/images/generations?api-version=${apiVersion}`, {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, n: 1, size: "1024x1024", output_format: "png" }),
+    body: JSON.stringify({ prompt, n: 1, size, output_format: "png" }),
   });
 
   const data = (await response.json()) as AzureImageResponse;
@@ -185,7 +250,7 @@ async function callAzureGenerations(prompt: string) {
   return { data } as const;
 }
 
-async function callAzureEdits(prompt: string, files: StoredImage[]) {
+async function callAzureEdits(prompt: string, files: StoredImage[], size: string) {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT?.replace(/\/$/, "");
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
   const deployment = process.env.AZURE_OPENAI_DEPLOYMENT ?? "gpt-image-2";
@@ -196,7 +261,7 @@ async function callAzureEdits(prompt: string, files: StoredImage[]) {
   const body = new FormData();
   body.set("prompt", prompt);
   body.set("n", "1");
-  body.set("size", "1024x1024");
+  body.set("size", size);
   body.set("output_format", "png");
   files.forEach((file) => body.append("image[]", new Blob([file.bytes], { type: file.type }), file.name));
 

@@ -33,6 +33,130 @@ const examples = [
   "A futuristic fashion model in pearl-white fabric, Paris street at blue hour",
 ];
 
+const aspectRatioOptions = [
+  "Square 1:1 — Instagram post, profile, marketplace",
+  "Portrait 4:5 — Instagram feed, product editorial",
+  "Story/Reel 9:16 — Instagram, TikTok, YouTube Shorts",
+  "Landscape 16:9 — YouTube thumbnail, website hero",
+  "Classic 3:2 — editorial photo, print crop",
+  "Poster 2:3 — vertical poster, Pinterest",
+  "Banner 3:1 — website masthead, LinkedIn cover",
+  "Wide 21:9 — cinematic frame, hero visual",
+  "LinkedIn 1.91:1 — sponsored post",
+  "Facebook 1.91:1 — shared link/ad",
+  "X/Twitter 16:9 — feed image",
+  "Pinterest 2:3 — pin graphic",
+];
+
+const qualityOptions = ["1K — fast draft", "2K — detailed social", "4K — premium high detail"];
+
+const sceneOptions = [
+  "Studio, softbox lighting, seamless backdrop",
+  "Golden hour outdoor environment",
+  "Night city street with neon reflections",
+  "Luxury interior, warm ambient light",
+  "Minimal white product set",
+  "Editorial fashion set",
+  "Office or workspace environment",
+  "Cafe / lifestyle setting",
+  "Nature landscape background",
+  "Futuristic sci-fi environment",
+  "Cinematic moody room",
+  "Clean UI/device mockup setting",
+];
+
+const subjectOptions = [
+  "Single person portrait",
+  "Full-body fashion subject",
+  "Product hero object",
+  "Person holding product",
+  "Beauty / skincare subject",
+  "Food or beverage item",
+  "Tech device or app screen",
+  "Luxury packaging",
+  "Architectural space",
+  "Vehicle / mobility subject",
+  "Infographic focal object",
+  "Abstract concept visual",
+];
+
+const detailOptions = [
+  "Natural skin texture, realistic fabric, soft shadows",
+  "Premium materials, glossy reflections, crisp edges",
+  "Dramatic rim light, shallow depth of field, 85mm lens feel",
+  "Wide-angle composition, environmental context, dynamic pose",
+  "Macro detail, tactile texture, high contrast lighting",
+  "Pastel palette, airy mood, clean negative space",
+  "Bold color grade, high fashion styling, editorial crop",
+  "Photorealistic render, ray-traced reflections, studio polish",
+  "Handcrafted texture, paper grain, organic imperfections",
+  "Clean typography-safe composition with room for copy",
+  "Top-down flat lay, arranged props, balanced composition",
+  "Low angle hero shot, powerful silhouette, cinematic contrast",
+];
+
+const useCaseOptions = [
+  "Editorial photo",
+  "Product mockup",
+  "Poster",
+  "Social media ad",
+  "Instagram feed post",
+  "TikTok/Reel cover",
+  "YouTube thumbnail",
+  "Website hero",
+  "UI screen mockup",
+  "Infographic",
+  "Concept frame",
+  "Pitch deck visual",
+  "E-commerce listing",
+  "Brand campaign key visual",
+];
+
+const constraintOptions = [
+  "No watermark, no logos, no extra text",
+  "Preserve face and identity",
+  "Preserve layout and camera angle",
+  "No distorted hands or face",
+  "No text unless explicitly requested",
+  "Keep background clean and uncluttered",
+  "Keep product shape accurate",
+  "Use realistic lighting only",
+  "Avoid cartoon or illustration style",
+  "Maintain premium brand-safe look",
+  "Leave negative space for headline copy",
+  "No duplicate people or extra limbs",
+];
+
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-slate-200">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none ring-cyan-300/40 transition focus:ring-4"
+      >
+        <option value="">Auto / no preference</option>
+        {options.map((option) => (
+          <option key={option} value={option} className="bg-slate-950 text-white">
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function UploadPanel({
   title,
   description,
@@ -79,6 +203,13 @@ function UploadPanel({
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
+  const [aspectRatio, setAspectRatio] = useState(aspectRatioOptions[0]);
+  const [quality, setQuality] = useState(qualityOptions[0]);
+  const [scene, setScene] = useState("");
+  const [subject, setSubject] = useState("");
+  const [importantDetails, setImportantDetails] = useState("");
+  const [useCase, setUseCase] = useState("");
+  const [constraints, setConstraints] = useState(constraintOptions[0]);
   const [styleFiles, setStyleFiles] = useState<PreviewFile[]>([]);
   const [characterFiles, setCharacterFiles] = useState<PreviewFile[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -88,7 +219,8 @@ export default function Home() {
   const [result, setResult] = useState<GenerateResponse | null>(null);
 
   const referenceCount = styleFiles.length + characterFiles.length;
-  const canGenerate = prompt.trim().length > 0 && !isGenerating;
+  const promptRequired = styleFiles.length === 0;
+  const canGenerate = (prompt.trim().length > 0 || styleFiles.length > 0) && !isGenerating;
   const downloadName = result ? `gptimage-${result.id}.png` : "gptimage.png";
 
   function addFiles(group: UploadGroup, event: ChangeEvent<HTMLInputElement>) {
@@ -156,6 +288,13 @@ export default function Home() {
 
     const formData = new FormData();
     formData.set("prompt", prompt.trim());
+    formData.set("aspectRatio", aspectRatio);
+    formData.set("quality", quality);
+    formData.set("scene", scene);
+    formData.set("subject", subject);
+    formData.set("importantDetails", importantDetails);
+    formData.set("useCase", useCase);
+    formData.set("constraints", constraints);
     styleFiles.forEach(({ file }) => formData.append("styleImages", file));
     characterFiles.forEach(({ file }) => formData.append("characterImages", file));
 
@@ -195,16 +334,32 @@ export default function Home() {
 
         <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <section className="rounded-[2rem] border border-white/10 bg-white/[0.08] p-6 shadow-2xl shadow-black/30 backdrop-blur md:p-8">
-            <label htmlFor="prompt" className="text-xl font-semibold text-white">
-              Image prompt
-            </label>
+            <div className="flex items-center justify-between gap-4">
+              <label htmlFor="prompt" className="text-xl font-semibold text-white">
+                Image prompt
+              </label>
+              <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-slate-300">
+                {promptRequired ? "Required without style reference" : "Optional with style reference"}
+              </span>
+            </div>
             <textarea
               id="prompt"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
-              placeholder="Describe subject, setting, camera, lighting, styling, mood, brand details..."
-              className="mt-4 min-h-56 w-full resize-none rounded-3xl border border-white/10 bg-black/30 p-5 text-lg leading-8 text-white outline-none ring-cyan-300/40 transition placeholder:text-slate-500 focus:ring-4"
+              placeholder={promptRequired ? "Describe subject, setting, camera, lighting, styling, mood, brand details..." : "Optional: add changes or extra direction. Style reference can drive the image."}
+              className="mt-4 min-h-40 w-full resize-none rounded-3xl border border-white/10 bg-black/30 p-5 text-lg leading-8 text-white outline-none ring-cyan-300/40 transition placeholder:text-slate-500 focus:ring-4"
             />
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <SelectField label="Social format / aspect ratio" value={aspectRatio} options={aspectRatioOptions} onChange={setAspectRatio} />
+              <SelectField label="Quality" value={quality} options={qualityOptions} onChange={setQuality} />
+              <SelectField label="Scene" value={scene} options={sceneOptions} onChange={setScene} />
+              <SelectField label="Subject" value={subject} options={subjectOptions} onChange={setSubject} />
+              <SelectField label="Important details" value={importantDetails} options={detailOptions} onChange={setImportantDetails} />
+              <SelectField label="Use case" value={useCase} options={useCaseOptions} onChange={setUseCase} />
+              <div className="md:col-span-2">
+                <SelectField label="Constraints" value={constraints} options={constraintOptions} onChange={setConstraints} />
+              </div>
+            </div>
             <div className="mt-5 flex flex-wrap gap-3">
               {examples.map((example) => (
                 <button
@@ -242,7 +397,7 @@ export default function Home() {
           <section className="grid gap-6">
             <UploadPanel
               title="Style references"
-              description="Use these for lighting, mood, palette, rendering style, or product-photo aesthetics."
+              description="Use these for style, composition, environment, pose, and the default person/subject to replace when character references are uploaded."
               files={styleFiles}
               onAdd={(event) => addFiles("style", event)}
               onRemove={(id) => removeFile("style", id)}
