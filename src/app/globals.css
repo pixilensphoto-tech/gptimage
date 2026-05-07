@@ -32,3 +32,33 @@ input,
 textarea {
   -webkit-tap-highlight-color: transparent;
 }
+
+.animated-logo-text {
+  background: linear-gradient(90deg, #67e8f9, #a78bfa, #f0abfc, #facc15, #5eead4, #67e8f9);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px rgba(103, 232, 249, 0.28));
+  animation: logo-gradient-flow 5s ease-in-out infinite, logo-float-glow 3.5s ease-in-out infinite;
+}
+
+@keyframes logo-gradient-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes logo-float-glow {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 14px rgba(103, 232, 249, 0.22));
+  }
+  50% {
+    transform: translateY(-1px) scale(1.015);
+    filter: drop-shadow(0 0 26px rgba(240, 171, 252, 0.36));
+  }
+}
