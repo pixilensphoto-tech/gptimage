@@ -12,6 +12,8 @@ RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
 ARG AZURE_OPENAI_ENDPOINT
 ARG AZURE_OPENAI_API_KEY
 ARG AZURE_OPENAI_DEPLOYMENT

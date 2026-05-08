@@ -367,7 +367,12 @@ export default function Home() {
               <h1 className="animated-logo-text pb-2 text-3xl font-black leading-[1.18] tracking-tight md:text-5xl">GPT-2 Image Creator</h1>
             </div>
           </div>
-          <div className="hidden h-10 w-10 animate-pulse rounded-full bg-gradient-to-br from-cyan-300 via-fuchsia-300 to-violet-400 blur-sm md:block" />
+          <div className="flex items-center gap-4">
+            <a href="/imagesearch" className="rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
+              Image search
+            </a>
+            <div className="hidden h-10 w-10 animate-pulse rounded-full bg-gradient-to-br from-cyan-300 via-fuchsia-300 to-violet-400 blur-sm md:block" />
+          </div>
         </header>
 
         <form onSubmit={onSubmit} className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
