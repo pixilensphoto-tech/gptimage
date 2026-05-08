@@ -75,28 +75,27 @@ async function scrapeGoogleImages(query: string, count: number): Promise<ImageRe
     const results = await page.evaluate((maxCount) => {
       const seen = new Set<string>();
       const output: ImageResult[] = [];
-      const anchors = Array.from(document.querySelectorAll("a"));
+      const images = Array.from(document.querySelectorAll("img")) as HTMLImageElement[];
 
-      for (const anchor of anchors) {
-        const img = anchor.querySelector("img") as HTMLImageElement | null;
-        if (!img) continue;
-        const thumbnail = img.currentSrc || img.src;
+      for (const img of images) {
+        const thumbnail = img.currentSrc || img.src || img.dataset.src || "";
         if (!thumbnail || thumbnail.startsWith("data:")) continue;
+        if (img.naturalWidth < 80 || img.naturalHeight < 80) continue;
 
-        const href = anchor.getAttribute("href") || "";
+        const anchor = img.closest("a") as HTMLAnchorElement | null;
+        const href = anchor?.getAttribute("href") || "";
         const urlParams = href.includes("?") ? new URLSearchParams(href.split("?")[1]) : null;
-        const imageUrl = urlParams?.get("imgurl") || urlParams?.get("url") || thumbnail;
-        const sourceUrl = urlParams?.get("imgrefurl") || urlParams?.get("url") || anchor.href || imageUrl;
-        if (!imageUrl || seen.has(imageUrl)) continue;
+        const imageUrl = urlParams?.get("imgurl") || thumbnail;
+        const sourceUrl = urlParams?.get("imgrefurl") || urlParams?.get("url") || anchor?.href || imageUrl;
+        if (seen.has(imageUrl)) continue;
         seen.add(imageUrl);
 
-        output.push({
-          title: img.alt || new URL(sourceUrl, location.href).hostname.replace(/^www\./, "") || "Image result",
-          thumbnail,
-          imageUrl,
-          sourceUrl,
-        });
+        let title = img.alt || "Image result";
+        try {
+          title = img.alt || new URL(sourceUrl, location.href).hostname.replace(/^www\./, "");
+        } catch {}
 
+        output.push({ title, thumbnail, imageUrl, sourceUrl });
         if (output.length >= maxCount) break;
       }
 
