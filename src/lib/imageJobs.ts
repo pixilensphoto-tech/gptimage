@@ -198,7 +198,8 @@ async function runJob(id: string, input: JobInput) {
       }
 
       setJob(id, { progress: 68, message: "Applying character reference" });
-      const editResult = await callAzureEdits(finalPrompt, [generatedImageToStoredImage(baseImage), ...input.characterImages], size, quality);
+      const characterPrompt = buildCharacterEditPrompt(finalPrompt, input.characterImages.length);
+      const editResult = await callAzureEdits(characterPrompt, [...input.characterImages, generatedImageToStoredImage(baseImage)], size, quality);
       clearInterval(heartbeat);
       if ("error" in editResult) throw new ImageGenerationError(editResult.error ?? "Image generation failed", isModerationError(editResult.error) ? "moderation_blocked" : undefined);
 
@@ -270,6 +271,17 @@ function startProgressHeartbeat(id: string) {
       message: job.progress > 68 ? "Still rendering details" : job.message,
     });
   }, 2500);
+}
+
+
+function buildCharacterEditPrompt(basePrompt: string, characterCount: number) {
+  return [
+    basePrompt,
+    "Character reference priority:",
+    `Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} as the primary source for identity, face, hairstyle, complexion, age range, and recognizable person continuity.`,
+    "Use the generated base image only for scene, outfit, pose, lighting, composition, and overall production direction. Replace any person identity from the generated base with the character reference identity.",
+    "Keep the result as a natural professional fashion/editorial image; do not create a face paste, head swap, or visible composite.",
+  ].join("\n\n");
 }
 
 function buildPrompt(settings: PromptSettings, references: ReferenceContext) {
