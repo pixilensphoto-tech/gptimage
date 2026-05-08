@@ -18,6 +18,7 @@ export type JsonImageJob = {
   updatedAt: number;
   result?: { image: string; mimeType: string; prompt: string };
   error?: string;
+  errorCode?: "moderation_blocked";
 };
 
 const jobs = new Map<string, JsonImageJob>();
@@ -84,9 +85,10 @@ async function runJsonImageJob(id: string, prompt: string, sourceImage: SourceIm
   try {
     setJob(id, { status: "running", progress: 24, message: sourceImage ? "Sending source image to GPT Image" : "Sending prompt to GPT Image" });
     const heartbeat = startProgressHeartbeat(id);
-    const result = sourceImage ? await callAzureImageEdit(prompt, sourceImage) : await callAzureImageGeneration(prompt);
+    const safePrompt = buildSafeFashionApiPrompt(prompt);
+    const result = sourceImage ? await callAzureImageEdit(safePrompt, sourceImage) : await callAzureImageGeneration(safePrompt);
     clearInterval(heartbeat);
-    if ("error" in result) throw new Error(result.error ?? "Image generation failed");
+    if ("error" in result) throw new ImageGenerationError(result.error ?? "Image generation failed", isModerationError(result.error) ? "moderation_blocked" : undefined);
 
     setJob(id, { progress: 88, message: "Receiving generated image" });
     const first = result.data.data?.[0];
@@ -110,7 +112,14 @@ async function runJsonImageJob(id: string, prompt: string, sourceImage: SourceIm
 
     throw new Error("Azure did not return an image");
   } catch (error) {
-    setJob(id, { status: "failed", progress: 100, message: "Generation failed", error: error instanceof Error ? error.message : "Image generation failed" });
+    const isModerationBlocked = error instanceof ImageGenerationError && error.code === "moderation_blocked";
+    setJob(id, {
+      status: "failed",
+      progress: 100,
+      message: "Generation failed",
+      error: isModerationBlocked ? moderationGuidance : error instanceof Error ? error.message : "Image generation failed",
+      errorCode: isModerationBlocked ? "moderation_blocked" : undefined,
+    });
   }
 }
 
@@ -125,6 +134,43 @@ function startProgressHeartbeat(id: string) {
   }, 2500);
 }
 
+function buildSafeFashionApiPrompt(prompt: string) {
+  return [
+    sanitizeFashionPrompt(prompt),
+    "Professional adult fashion/editorial or commercial campaign image. Non-explicit styling, no nudity, no sexualized framing, no intimate anatomy emphasis, no voyeuristic angle, no fetish styling, and no minors. Keep pose, wardrobe, lighting, and camera language suitable for a mainstream brand campaign.",
+  ].join("\n\n");
+}
+
+function sanitizeFashionPrompt(prompt: string) {
+  return prompt
+    .replace(/\bsexy\b/gi, "elegant")
+    .replace(/\bsensual\b/gi, "refined")
+    .replace(/\bseductive\b/gi, "confident")
+    .replace(/\berotic\b/gi, "editorial")
+    .replace(/\blingerie\b/gi, "fashion outfit")
+    .replace(/\bunderwear\b/gi, "fashion outfit")
+    .replace(/\bnude\b/gi, "neutral-toned")
+    .replace(/\bnaked\b/gi, "minimally styled")
+    .replace(/\bbody\b/gi, "silhouette")
+    .replace(/\banatomy\b/gi, "silhouette")
+    .replace(/\bcurves?\b/gi, "garment shape")
+    .replace(/\bskin\b/gi, "complexion")
+    .replace(/\bprovocative\b/gi, "high-fashion")
+    .replace(/\bracy\b/gi, "bold editorial");
+}
+
+class ImageGenerationError extends Error {
+  constructor(message: string, readonly code?: "moderation_blocked") {
+    super(message);
+  }
+}
+
+const moderationGuidance = "Azure blocked this request with its image safety filter. Try professional adult fashion/editorial wording and avoid nudity, lingerie, swimwear, sheer/wet clothing, sexualized poses, minors, or body-anatomy wording.";
+
+function isModerationError(message: string | undefined) {
+  return /moderation|content.?filter|safety|responsible ai|policy|rai/i.test(message ?? "");
+}
+
 async function callAzureImageGeneration(prompt: string) {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT?.replace(/\/$/, "");
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
@@ -136,7 +182,7 @@ async function callAzureImageGeneration(prompt: string) {
   const response = await fetch(`${endpoint}/openai/deployments/${deployment}/images/generations?api-version=${apiVersion}`, {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, n: 1, size: "1024x1536", output_format: "png" }),
+    body: JSON.stringify({ prompt, n: 1, size: "1024x1536", quality: "medium", output_format: "png" }),
   });
 
   const data = (await response.json()) as AzureImageResponse;
@@ -156,6 +202,8 @@ async function callAzureImageEdit(prompt: string, sourceImage: SourceImage) {
   body.set("prompt", prompt);
   body.set("n", "1");
   body.set("size", "1024x1536");
+  body.set("quality", "medium");
+  body.set("input_fidelity", "low");
   body.set("output_format", "png");
   body.append("image[]", new Blob([new Uint8Array(sourceImage.bytes)], { type: sourceImage.mimeType }), "source-image");
 

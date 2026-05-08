@@ -30,7 +30,7 @@ type JobResponse = {
 const examples = [
   "Editorial portrait of a founder in a sunlit studio, cinematic realism, 85mm lens",
   "Luxury skincare bottle on wet stone, soft reflections, premium campaign lighting",
-  "A futuristic fashion model in pearl-white fabric, Paris street at blue hour",
+  "Professional adult fashion editorial in pearl-white fabric, Paris street at blue hour, non-explicit brand campaign styling",
 ];
 
 const aspectRatioOptions = [
@@ -49,6 +49,12 @@ const aspectRatioOptions = [
 ];
 
 const qualityOptions = ["1K — fast draft", "2K — detailed social", "4K — premium high detail"];
+
+const safetyModeOptions = [
+  "Safe Fashion — recommended, fewer blocks",
+  "Conservative Catalog — safest, less creative",
+  "Creative Editorial — more freedom, may block",
+];
 
 const sceneOptions = [
   "Studio, softbox lighting, seamless backdrop",
@@ -87,7 +93,7 @@ const detailOptions = [
   "Wide-angle composition, environmental context, dynamic pose",
   "Macro detail, tactile texture, high contrast lighting",
   "Pastel palette, airy mood, clean negative space",
-  "Bold color grade, high fashion styling, editorial crop",
+  "Bold color grade, professional high-fashion styling, editorial crop",
   "Photorealistic render, ray-traced reflections, studio polish",
   "Handcrafted texture, paper grain, organic imperfections",
   "Clean typography-safe composition with room for copy",
@@ -122,7 +128,7 @@ const constraintOptions = [
   "Keep product shape accurate",
   "Use realistic lighting only",
   "Avoid cartoon or illustration style",
-  "Maintain premium brand-safe look",
+  "Maintain premium brand-safe non-explicit look",
   "Leave negative space for headline copy",
   "No duplicate people or extra limbs",
 ];
@@ -190,6 +196,12 @@ async function compressImageIfNeeded(file: File) {
   return bestFile;
 }
 
+function safetyModeValue(option: string) {
+  if (option.startsWith("Conservative")) return "catalog";
+  if (option.startsWith("Creative")) return "creative";
+  return "safe";
+}
+
 function UploadPanel({
   title,
   description,
@@ -238,6 +250,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState(aspectRatioOptions[2]);
   const [quality, setQuality] = useState(qualityOptions[0]);
+  const [safetyMode, setSafetyMode] = useState(safetyModeOptions[0]);
   const [scene, setScene] = useState("");
   const [subject, setSubject] = useState("");
   const [importantDetails, setImportantDetails] = useState("");
@@ -328,6 +341,7 @@ export default function Home() {
     formData.set("prompt", prompt.trim());
     formData.set("aspectRatio", aspectRatio);
     formData.set("quality", quality);
+    formData.set("safetyMode", safetyModeValue(safetyMode));
     formData.set("scene", scene);
     formData.set("subject", subject);
     formData.set("importantDetails", importantDetails);
@@ -395,6 +409,7 @@ export default function Home() {
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <SelectField label="Social format / aspect ratio" value={aspectRatio} options={aspectRatioOptions} onChange={setAspectRatio} />
               <SelectField label="Quality" value={quality} options={qualityOptions} onChange={setQuality} />
+              <SelectField label="Fashion safety mode" value={safetyMode} options={safetyModeOptions} onChange={setSafetyMode} />
               <SelectField label="Scene" value={scene} options={sceneOptions} onChange={setScene} />
               <SelectField label="Subject" value={subject} options={subjectOptions} onChange={setSubject} />
               <SelectField label="Important details" value={importantDetails} options={detailOptions} onChange={setImportantDetails} />
@@ -440,14 +455,14 @@ export default function Home() {
           <section className="grid gap-6">
             <UploadPanel
               title="Style references"
-              description="Use these to reverse-engineer pose, scene, lighting, setting, wardrobe, camera, and composition for a new image."
+              description="Use these as visual direction for pose, scene, lighting, setting, garment styling, camera, and composition in a new original image."
               files={styleFiles}
               onAdd={(event) => addFiles("style", event)}
               onRemove={(id) => removeFile("style", id)}
             />
             <UploadPanel
               title="Character references"
-              description="Use these as the full person reference: face, identity, body build, proportions, posture, and recognizable details."
+              description="Use these for identity, hairstyle, complexion, general silhouette, posture, and styling continuity in a professional non-explicit image."
               files={characterFiles}
               onAdd={(event) => addFiles("character", event)}
               onRemove={(id) => removeFile("character", id)}
