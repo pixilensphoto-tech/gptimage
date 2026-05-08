@@ -347,6 +347,7 @@ export default function Home() {
     formData.set("importantDetails", importantDetails);
     formData.set("useCase", useCase);
     formData.set("constraints", constraints);
+    formData.set("generationFlow", styleFiles.length > 0 ? "staged" : "standard");
     styleFiles.forEach(({ file }) => formData.append("styleImages", file));
     characterFiles.forEach(({ file }) => formData.append("characterImages", file));
 
@@ -403,7 +404,7 @@ export default function Home() {
               id="prompt"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
-              placeholder={promptRequired ? "Describe subject, setting, camera, lighting, styling, mood, brand details..." : "Optional: add changes or extra direction. Style reference can drive the image."}
+              placeholder={promptRequired ? "Describe subject, setting, camera, lighting, styling, mood, brand details..." : "Optional: add changes or extra direction. Style references are analyzed into fashion notes first."}
               className="mt-4 min-h-40 w-full resize-none rounded-3xl border border-white/10 bg-black/30 p-5 text-lg leading-8 text-white outline-none ring-cyan-300/40 transition placeholder:text-slate-500 focus:ring-4"
             />
             <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -454,8 +455,8 @@ export default function Home() {
 
           <section className="grid gap-6">
             <UploadPanel
-              title="Style references"
-              description="Use these as visual direction for pose, scene, lighting, setting, garment styling, camera, and composition in a new original image."
+              title="Outfit / style references"
+              description="The app analyzes these into neutral outfit, pose, scene, lighting, garment, camera, and composition notes, then creates a safe base image before any character edit."
               files={styleFiles}
               onAdd={(event) => addFiles("style", event)}
               onRemove={(id) => removeFile("style", id)}

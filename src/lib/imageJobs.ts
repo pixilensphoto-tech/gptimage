@@ -1,3 +1,5 @@
+import { analyzeStyleReferences } from "@/lib/fashionVision";
+
 type AzureImageItem = {
   b64_json?: string;
   b64?: string;
@@ -9,7 +11,7 @@ type AzureImageResponse = {
   error?: { message?: string };
 };
 
-type StoredImage = {
+export type StoredImage = {
   name: string;
   type: string;
   bytes: ArrayBuffer;
@@ -42,6 +44,7 @@ type JobInput = {
   useCase: string;
   constraints: string;
   safetyMode: "creative" | "safe" | "catalog";
+  generationFlow: "standard" | "staged";
   styleImages: StoredImage[];
   characterImages: StoredImage[];
 };
@@ -80,6 +83,8 @@ export async function createImageJob(formData: FormData) {
   const useCase = String(formData.get("useCase") ?? "").trim();
   const constraints = String(formData.get("constraints") ?? "").trim();
   const safetyMode = resolveSafetyMode(String(formData.get("safetyMode") ?? "safe"));
+  const requestedFlow = String(formData.get("generationFlow") ?? "staged");
+  const generationFlow = requestedFlow === "standard" ? "standard" : "staged";
 
   const styleFiles = formData.getAll("styleImages").filter((item): item is File => item instanceof File && item.size > 0);
   const characterFiles = formData.getAll("characterImages").filter((item): item is File => item instanceof File && item.size > 0);
@@ -104,6 +109,7 @@ export async function createImageJob(formData: FormData) {
     useCase,
     constraints,
     safetyMode,
+    generationFlow,
     styleImages: await Promise.all(styleFiles.map(fileToStoredImage)),
     characterImages: await Promise.all(characterFiles.map(fileToStoredImage)),
   };
@@ -141,9 +147,39 @@ function setJob(id: string, updates: Partial<ImageJob>) {
 async function runJob(id: string, input: JobInput) {
   try {
     setJob(id, { status: "running", progress: 18, message: "Preparing prompt and references" });
-    const finalPrompt = buildPrompt(input, input.styleImages.length, input.characterImages.length);
     const size = resolveAzureSize(input.aspectRatio, input.quality);
     const quality = resolveAzureQuality(input.quality);
+    const useStagedFlow = input.generationFlow === "staged" && input.styleImages.length > 0;
+
+    if (useStagedFlow) {
+      setJob(id, { progress: 24, message: "Analyzing outfit reference" });
+      const analyzedStyle = await analyzeStyleReferences(input.styleImages);
+      const finalPrompt = buildPrompt(input, input.styleImages.length, input.characterImages.length, analyzedStyle, true);
+
+      setJob(id, { progress: 36, message: "Creating safe fashion base image" });
+      const heartbeat = startProgressHeartbeat(id);
+      const baseResult = await callAzureGenerations(finalPrompt, size, quality);
+      if ("error" in baseResult) throw new ImageGenerationError(baseResult.error ?? "Image generation failed", isModerationError(baseResult.error) ? "moderation_blocked" : undefined);
+      const baseImage = await extractGeneratedImage(baseResult.data, input.prompt);
+
+      if (input.characterImages.length === 0) {
+        clearInterval(heartbeat);
+        setJob(id, { status: "succeeded", progress: 100, message: "Image ready", result: { image: baseImage.image, mimeType: baseImage.mimeType, prompt: input.prompt } });
+        return;
+      }
+
+      setJob(id, { progress: 68, message: "Applying character reference" });
+      const editResult = await callAzureEdits(finalPrompt, [generatedImageToStoredImage(baseImage), ...input.characterImages], size, quality);
+      clearInterval(heartbeat);
+      if ("error" in editResult) throw new ImageGenerationError(editResult.error ?? "Image generation failed", isModerationError(editResult.error) ? "moderation_blocked" : undefined);
+
+      setJob(id, { progress: 88, message: "Receiving generated image" });
+      const finalImage = await extractGeneratedImage(editResult.data, input.prompt);
+      setJob(id, { status: "succeeded", progress: 100, message: "Image ready", result: { image: finalImage.image, mimeType: finalImage.mimeType, prompt: input.prompt } });
+      return;
+    }
+
+    const finalPrompt = buildPrompt(input, input.styleImages.length, input.characterImages.length);
     const allImages = [...input.styleImages, ...input.characterImages];
 
     setJob(id, { progress: 36, message: allImages.length ? "Sending references to Azure GPT Image" : "Sending prompt to Azure GPT Image" });
@@ -153,26 +189,8 @@ async function runJob(id: string, input: JobInput) {
     if ("error" in result) throw new ImageGenerationError(result.error ?? "Image generation failed", isModerationError(result.error) ? "moderation_blocked" : undefined);
 
     setJob(id, { progress: 88, message: "Receiving generated image" });
-    const first = result.data.data?.[0];
-    const image = first?.b64_json ?? first?.b64;
-    if (image) {
-      setJob(id, { status: "succeeded", progress: 100, message: "Image ready", result: { image, mimeType: "image/png", prompt: input.prompt } });
-      return;
-    }
-
-    if (first?.url) {
-      const imageResponse = await fetch(first.url);
-      const buffer = Buffer.from(await imageResponse.arrayBuffer());
-      setJob(id, {
-        status: "succeeded",
-        progress: 100,
-        message: "Image ready",
-        result: { image: buffer.toString("base64"), mimeType: imageResponse.headers.get("content-type") ?? "image/png", prompt: input.prompt },
-      });
-      return;
-    }
-
-    throw new Error("Azure did not return an image");
+    const image = await extractGeneratedImage(result.data, input.prompt);
+    setJob(id, { status: "succeeded", progress: 100, message: "Image ready", result: { image: image.image, mimeType: image.mimeType, prompt: input.prompt } });
   } catch (error) {
     const isModerationBlocked = error instanceof ImageGenerationError && error.code === "moderation_blocked";
     setJob(id, {
@@ -183,6 +201,35 @@ async function runJob(id: string, input: JobInput) {
       errorCode: isModerationBlocked ? "moderation_blocked" : undefined,
     });
   }
+}
+
+
+type GeneratedImage = {
+  image: string;
+  mimeType: string;
+  prompt: string;
+};
+
+async function extractGeneratedImage(data: AzureImageResponse, prompt: string): Promise<GeneratedImage> {
+  const first = data.data?.[0];
+  const image = first?.b64_json ?? first?.b64;
+  if (image) return { image, mimeType: "image/png", prompt };
+
+  if (first?.url) {
+    const imageResponse = await fetch(first.url);
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
+    return { image: buffer.toString("base64"), mimeType: imageResponse.headers.get("content-type") ?? "image/png", prompt };
+  }
+
+  throw new Error("Azure did not return an image");
+}
+
+function generatedImageToStoredImage(image: GeneratedImage): StoredImage {
+  return {
+    name: "safe-fashion-base.png",
+    type: image.mimeType,
+    bytes: Uint8Array.from(Buffer.from(image.image, "base64")).buffer,
+  };
 }
 
 function startProgressHeartbeat(id: string) {
@@ -196,13 +243,13 @@ function startProgressHeartbeat(id: string) {
   }, 2500);
 }
 
-function buildPrompt(settings: PromptSettings, styleCount: number, characterCount: number) {
-  if (settings.safetyMode === "catalog") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: strictCatalogConstraints(settings.constraints) }, styleCount, characterCount, "catalog");
-  if (settings.safetyMode === "safe") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: sanitizeFashionPrompt(settings.constraints) }, styleCount, characterCount, "safe");
-  return buildPromptFromSettings(settings, styleCount, characterCount, "creative");
+function buildPrompt(settings: PromptSettings, styleCount: number, characterCount: number, analyzedStyle = "", styleImagesAnalyzed = false) {
+  if (settings.safetyMode === "catalog") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: strictCatalogConstraints(settings.constraints) }, styleCount, characterCount, "catalog", analyzedStyle, styleImagesAnalyzed);
+  if (settings.safetyMode === "safe") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: sanitizeFashionPrompt(settings.constraints) }, styleCount, characterCount, "safe", analyzedStyle, styleImagesAnalyzed);
+  return buildPromptFromSettings(settings, styleCount, characterCount, "creative", analyzedStyle, styleImagesAnalyzed);
 }
 
-function buildPromptFromSettings(settings: PromptSettings, styleCount: number, characterCount: number, safetyMode: "creative" | "safe" | "catalog") {
+function buildPromptFromSettings(settings: PromptSettings, styleCount: number, characterCount: number, safetyMode: "creative" | "safe" | "catalog", analyzedStyle = "", styleImagesAnalyzed = false) {
   const sections = [
     section("Creative direction", settings.prompt),
     section("Scene", settings.scene),
@@ -211,20 +258,22 @@ function buildPromptFromSettings(settings: PromptSettings, styleCount: number, c
     section("Use case", settings.useCase),
     section("Constraints", settings.constraints),
     section("Safety and styling requirements", safeFashionRequirements(safetyMode)),
+    section("Reference-derived fashion specification", analyzedStyle),
   ].filter(Boolean) as string[];
 
   const referenceInstructions: string[] = [];
-  if (styleCount > 0 && characterCount > 0) {
+  if (styleImagesAnalyzed && styleCount > 0) {
     referenceInstructions.push(
-      `Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} for recognizable identity, hairstyle, complexion, age range, general silhouette, posture, and styling continuity. Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} as visual direction for the editorial pose, scene, lighting, camera angle, composition, mood, color grade, garment styling, and overall campaign look. Create a new original professional fashion/editorial photo; do not paste, swap, or composite faces or bodies from separate images, and do not reproduce the source photo directly.`
+      `Use the reference-derived fashion specification as visual direction for garment design, styling, scene, lighting, camera angle, composition, mood, and campaign look. The original style reference image${styleCount > 1 ? "s were" : " was"} analyzed into text and should not be treated as direct edit input.`
     );
   } else if (styleCount > 0) {
     referenceInstructions.push(
       `Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} as visual direction for the editorial pose, scene, lighting, setting, garment styling, composition, color palette, camera angle, and mood. Create a new original professional fashion/editorial image inspired by those production choices rather than copying or editing the source photo directly.`
     );
-  } else if (characterCount > 0) {
+  }
+  if (characterCount > 0) {
     referenceInstructions.push(
-      `Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} for recognizable identity, hairstyle, complexion, age range, general silhouette, posture, and styling continuity in a professional non-explicit editorial image.`
+      `Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} for recognizable identity, hairstyle, complexion, age range, general silhouette, posture, and styling continuity in a professional non-explicit editorial image. Do not paste, swap, or composite faces or bodies from separate images.`
     );
   }
   if (referenceInstructions.length > 0) sections.push(section("Reference-image instructions", referenceInstructions.join(" "))!);
@@ -314,11 +363,11 @@ async function callAzureGenerations(prompt: string, size: string, quality: strin
 
   if (!endpoint || !apiKey) return { error: "Azure image generation is not configured", status: 500 } as const;
 
-  const response = await fetch(`${endpoint}/openai/deployments/${deployment}/images/generations?api-version=${apiVersion}`, {
+  const response = await throttleAzureImageRequest(() => fetch(`${endpoint}/openai/deployments/${deployment}/images/generations?api-version=${apiVersion}`, {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
     body: JSON.stringify({ prompt, n: 1, size, quality, output_format: "png" }),
-  });
+  }));
 
   const data = (await response.json()) as AzureImageResponse;
   if (!response.ok) return { error: data.error?.message ?? "Azure image generation failed", status: response.status } as const;
@@ -342,15 +391,30 @@ async function callAzureEdits(prompt: string, files: StoredImage[], size: string
   body.set("output_format", "png");
   files.forEach((file) => body.append("image[]", new Blob([file.bytes], { type: file.type }), file.name));
 
-  const response = await fetch(`${endpoint}/openai/deployments/${deployment}/images/edits?api-version=${apiVersion}`, {
+  const response = await throttleAzureImageRequest(() => fetch(`${endpoint}/openai/deployments/${deployment}/images/edits?api-version=${apiVersion}`, {
     method: "POST",
     headers: { "api-key": apiKey },
     body,
-  });
+  }));
 
   const data = (await response.json()) as AzureImageResponse;
   if (!response.ok) return { error: data.error?.message ?? "Azure referenced image generation failed", status: response.status } as const;
   return { data } as const;
+}
+
+let azureQueue = Promise.resolve();
+let lastAzureImageRequestAt = 0;
+const minAzureImageRequestSpacingMs = Number(process.env.AZURE_IMAGE_MIN_REQUEST_SPACING_MS ?? "6500");
+
+function throttleAzureImageRequest<T>(request: () => Promise<T>) {
+  const run = azureQueue.then(async () => {
+    const waitMs = Math.max(0, minAzureImageRequestSpacingMs - (Date.now() - lastAzureImageRequestAt));
+    if (waitMs > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+    lastAzureImageRequestAt = Date.now();
+    return request();
+  });
+  azureQueue = run.then(() => undefined, () => undefined);
+  return run;
 }
 
 function pruneJobs() {
