@@ -47,7 +47,7 @@ export async function analyzeStyleReferences(images: StoredImage[]) {
         },
         { role: "user", content },
       ],
-      max_tokens: 700,
+      max_completion_tokens: 700,
       temperature: 0.2,
     }),
   });
