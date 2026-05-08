@@ -10,6 +10,20 @@ type VisionResponse = {
 };
 
 export async function analyzeStyleReferences(images: StoredImage[]) {
+  return analyzeStyleReferencesByRole({ outfitImages: images });
+}
+
+export async function analyzeStyleReferencesByRole({
+  sceneImages = [],
+  poseImages = [],
+  outfitImages = [],
+  useSceneOnlySource = false,
+}: {
+  sceneImages?: StoredImage[];
+  poseImages?: StoredImage[];
+  outfitImages?: StoredImage[];
+  useSceneOnlySource?: boolean;
+}) {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT?.replace(/\/$/, "");
   const apiKey = process.env.AZURE_OPENAI_API_KEY;
   const deployment = process.env.AZURE_OPENAI_VISION_DEPLOYMENT;
@@ -22,17 +36,20 @@ export async function analyzeStyleReferences(images: StoredImage[]) {
     {
       type: "text",
       text: [
-        "Analyze these fashion/style reference images for a legitimate non-explicit fashion image generation workflow.",
-        "Return only a neutral production specification. Do not describe attractiveness, sexual appeal, intimate anatomy, or erotic intent.",
-        "If the garment shows normal fashion exposure such as sari or lehenga midriff, crop top waist, gown leg slit, neckline shape, or activewear, describe it as garment construction and styling context only.",
-        "Include: garment category names, cultural garment names when applicable, fabric/material, color palette, silhouette/cut, layering, accessories, footwear, pose/composition, camera angle, lighting, setting, and brand/editorial mood.",
+        "Analyze these role-labeled references for a legitimate non-explicit fashion image generation workflow.",
+        "Return only a neutral production specification with sections named Scene/Bg notes, Pose notes, Outfit notes, and Source priority notes.",
+        "Do not describe attractiveness, sexual appeal, intimate anatomy, or erotic intent.",
+        "If a garment shows normal fashion exposure such as sari or lehenga midriff, crop top waist, gown leg slit, neckline shape, or activewear, describe it as garment construction and styling context only.",
+        "Image 1 Scene/Bg controls background, location, lighting, environment, camera/composition, and mood.",
+        "Image 2 Pose controls posture, body position, camera angle, framing, and subject placement only; do not infer identity.",
+        "Image 3 Outfit controls clothing, garment construction, colors, textiles, accessories, and footwear only.",
+        useSceneOnlySource ? "Source priority: Image 1 Scene/Bg is the primary visual source for base generation. Treat Image 2 Pose and Image 3 Outfit as secondary text-only production direction that must not override Image 1's scene/background source." : "Source priority: combine the role-specific notes as text direction while preserving each image's assigned role.",
         "Use concise bullet points. Keep wording mainstream fashion/catalog/editorial, adult-presenting, non-explicit, and suitable for a brand campaign.",
       ].join(" "),
     },
-    ...images.map((image) => ({
-      type: "image_url" as const,
-      image_url: { url: `data:${image.type};base64,${Buffer.from(image.bytes).toString("base64")}`, detail: "low" as const },
-    })),
+    ...imageContent("Image 1 Scene/Bg", sceneImages),
+    ...imageContent("Image 2 Pose", poseImages),
+    ...imageContent("Image 3 Outfit", outfitImages),
   ];
 
   const response = await fetch(`${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`, {
@@ -47,7 +64,7 @@ export async function analyzeStyleReferences(images: StoredImage[]) {
         },
         { role: "user", content },
       ],
-      max_completion_tokens: 700,
+      max_completion_tokens: 900,
       temperature: 0.2,
     }),
   });
@@ -58,6 +75,14 @@ export async function analyzeStyleReferences(images: StoredImage[]) {
   const spec = sanitizeFashionSpec(data.choices?.[0]?.message?.content ?? "");
   if (!spec) throw new Error("Azure reference analysis did not return usable outfit notes");
   return spec;
+}
+
+
+function imageContent(label: string, images: StoredImage[]): VisionContent[] {
+  return images.flatMap((image) => [
+    { type: "text" as const, text: label },
+    { type: "image_url" as const, image_url: { url: `data:${image.type};base64,${Buffer.from(image.bytes).toString("base64")}`, detail: "low" as const } },
+  ]);
 }
 
 function sanitizeFashionSpec(value: string) {

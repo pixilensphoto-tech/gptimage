@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useState } from "react";
 
-type UploadGroup = "style" | "character";
+type UploadGroup = "scene" | "pose" | "outfit" | "character";
 
 type PreviewFile = {
   file: File;
@@ -208,12 +208,14 @@ function UploadPanel({
   files,
   onAdd,
   onRemove,
+  multiple = true,
 }: {
   title: string;
   description: string;
   files: PreviewFile[];
   onAdd: (event: ChangeEvent<HTMLInputElement>) => void;
   onRemove: (id: string) => void;
+  multiple?: boolean;
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl shadow-black/20 backdrop-blur">
@@ -222,9 +224,9 @@ function UploadPanel({
         <p className="mt-1 text-sm leading-6 text-slate-300">{description}</p>
       </div>
       <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-cyan-300/40 bg-cyan-300/[0.04] px-4 py-7 text-center transition hover:border-cyan-200 hover:bg-cyan-300/[0.08]">
-        <span className="text-sm font-medium text-cyan-100">Upload one or more images</span>
+        <span className="text-sm font-medium text-cyan-100">{multiple ? "Upload one or more images" : "Upload image"}</span>
         <span className="mt-1 text-xs text-slate-400">PNG, JPEG, or WebP. Large images are compressed automatically.</span>
-        <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={onAdd} />
+        <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" multiple={multiple} onChange={onAdd} />
       </label>
       {files.length > 0 ? (
         <div className="mt-4 grid grid-cols-3 gap-3">
@@ -256,7 +258,10 @@ export default function Home() {
   const [importantDetails, setImportantDetails] = useState("");
   const [useCase, setUseCase] = useState("");
   const [constraints, setConstraints] = useState(constraintOptions[0]);
-  const [styleFiles, setStyleFiles] = useState<PreviewFile[]>([]);
+  const [sceneFiles, setSceneFiles] = useState<PreviewFile[]>([]);
+  const [poseFiles, setPoseFiles] = useState<PreviewFile[]>([]);
+  const [outfitFiles, setOutfitFiles] = useState<PreviewFile[]>([]);
+  const [useSceneOnlySource, setUseSceneOnlySource] = useState(false);
   const [characterFiles, setCharacterFiles] = useState<PreviewFile[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -264,9 +269,10 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateResponse | null>(null);
 
-  const referenceCount = styleFiles.length + characterFiles.length;
-  const promptRequired = styleFiles.length === 0;
-  const canGenerate = (prompt.trim().length > 0 || styleFiles.length > 0) && !isGenerating;
+  const hasRoleReference = sceneFiles.length > 0 || poseFiles.length > 0 || outfitFiles.length > 0;
+  const referenceCount = sceneFiles.length + poseFiles.length + outfitFiles.length + characterFiles.length;
+  const promptRequired = !hasRoleReference;
+  const canGenerate = (prompt.trim().length > 0 || hasRoleReference) && !isGenerating;
   const downloadName = result ? `gptimage-${result.id}.png` : "gptimage.png";
 
   async function addFiles(group: UploadGroup, event: ChangeEvent<HTMLInputElement>) {
@@ -283,25 +289,22 @@ export default function Home() {
       })
     );
 
-    if (group === "style") {
-      setStyleFiles((current) => [...current, ...previews]);
-    } else {
-      setCharacterFiles((current) => [...current, ...previews]);
-    }
+    updateFiles(group, (current) => (group === "character" ? [...current, ...previews] : previews.slice(0, 1)));
   }
 
   function removeFile(group: UploadGroup, id: string) {
-    const update = (files: PreviewFile[]) => {
+    updateFiles(group, (files) => {
       const removed = files.find((item) => item.id === id);
       if (removed) URL.revokeObjectURL(removed.url);
       return files.filter((item) => item.id !== id);
-    };
+    });
+  }
 
-    if (group === "style") {
-      setStyleFiles(update);
-    } else {
-      setCharacterFiles(update);
-    }
+  function updateFiles(group: UploadGroup, update: (files: PreviewFile[]) => PreviewFile[]) {
+    if (group === "scene") setSceneFiles(update);
+    if (group === "pose") setPoseFiles(update);
+    if (group === "outfit") setOutfitFiles(update);
+    if (group === "character") setCharacterFiles(update);
   }
 
   async function pollJob(jobId: string) {
@@ -347,8 +350,11 @@ export default function Home() {
     formData.set("importantDetails", importantDetails);
     formData.set("useCase", useCase);
     formData.set("constraints", constraints);
-    formData.set("generationFlow", styleFiles.length > 0 ? "staged" : "standard");
-    styleFiles.forEach(({ file }) => formData.append("styleImages", file));
+    formData.set("generationFlow", hasRoleReference ? "staged" : "standard");
+    formData.set("useSceneOnlySource", useSceneOnlySource ? "true" : "false");
+    sceneFiles.forEach(({ file }) => formData.append("sceneImages", file));
+    poseFiles.forEach(({ file }) => formData.append("poseImages", file));
+    outfitFiles.forEach(({ file }) => formData.append("outfitImages", file));
     characterFiles.forEach(({ file }) => formData.append("characterImages", file));
 
     try {
@@ -404,7 +410,7 @@ export default function Home() {
               id="prompt"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
-              placeholder={promptRequired ? "Describe subject, setting, camera, lighting, styling, mood, brand details..." : "Optional: add changes or extra direction. Style references are analyzed into fashion notes first."}
+              placeholder={promptRequired ? "Describe subject, setting, camera, lighting, styling, mood, brand details..." : "Optional: add changes or extra direction. Role references are analyzed into scene, pose, and outfit notes first."}
               className="mt-4 min-h-40 w-full resize-none rounded-3xl border border-white/10 bg-black/30 p-5 text-lg leading-8 text-white outline-none ring-cyan-300/40 transition placeholder:text-slate-500 focus:ring-4"
             />
             <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -455,11 +461,42 @@ export default function Home() {
 
           <section className="grid gap-6">
             <UploadPanel
-              title="Outfit / style references"
-              description="The app analyzes these into neutral outfit, pose, scene, lighting, garment, camera, and composition notes, then creates a safe base image before any character edit."
-              files={styleFiles}
-              onAdd={(event) => addFiles("style", event)}
-              onRemove={(id) => removeFile("style", id)}
+              title="Image 1 — Scene/Bg"
+              description="Use this for background, location, lighting, atmosphere, camera mood, and composition."
+              files={sceneFiles}
+              onAdd={(event) => addFiles("scene", event)}
+              onRemove={(id) => removeFile("scene", id)}
+              multiple={false}
+            />
+            <label className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 text-sm leading-6 text-slate-300 shadow-2xl shadow-black/20 backdrop-blur">
+              <span className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={useSceneOnlySource}
+                  onChange={(event) => setUseSceneOnlySource(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-white/20 bg-black/40 text-cyan-300"
+                />
+                <span>
+                  <span className="block font-semibold text-white">Use Image 1 as the only visual source for base generation</span>
+                  <span className="mt-1 block text-slate-400">Image 2 Pose and Image 3 Outfit stay as secondary text direction. Character references still apply after the base image.</span>
+                </span>
+              </span>
+            </label>
+            <UploadPanel
+              title="Image 2 — Pose"
+              description="Use this for posture, body position, camera angle, framing, and subject placement, not identity."
+              files={poseFiles}
+              onAdd={(event) => addFiles("pose", event)}
+              onRemove={(id) => removeFile("pose", id)}
+              multiple={false}
+            />
+            <UploadPanel
+              title="Image 3 — Outfit"
+              description="Use this for garment category, fabric, colors, styling, accessories, and footwear."
+              files={outfitFiles}
+              onAdd={(event) => addFiles("outfit", event)}
+              onRemove={(id) => removeFile("outfit", id)}
+              multiple={false}
             />
             <UploadPanel
               title="Character references"

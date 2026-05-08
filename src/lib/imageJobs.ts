@@ -1,4 +1,4 @@
-import { analyzeStyleReferences } from "@/lib/fashionVision";
+import { analyzeStyleReferencesByRole } from "@/lib/fashionVision";
 
 type AzureImageItem = {
   b64_json?: string;
@@ -45,11 +45,24 @@ type JobInput = {
   constraints: string;
   safetyMode: "creative" | "safe" | "catalog";
   generationFlow: "standard" | "staged";
-  styleImages: StoredImage[];
+  sceneImages: StoredImage[];
+  poseImages: StoredImage[];
+  outfitImages: StoredImage[];
   characterImages: StoredImage[];
+  useSceneOnlySource: boolean;
 };
 
 type PromptSettings = Pick<JobInput, "prompt" | "aspectRatio" | "quality" | "scene" | "subject" | "importantDetails" | "useCase" | "constraints" | "safetyMode">;
+
+type ReferenceContext = {
+  sceneCount: number;
+  poseCount: number;
+  outfitCount: number;
+  characterCount: number;
+  analyzedStyle?: string;
+  styleImagesAnalyzed?: boolean;
+  useSceneOnlySource?: boolean;
+};
 
 const jobs = new Map<string, ImageJob>();
 const requestTimes: number[] = [];
@@ -86,11 +99,18 @@ export async function createImageJob(formData: FormData) {
   const requestedFlow = String(formData.get("generationFlow") ?? "staged");
   const generationFlow = requestedFlow === "standard" ? "standard" : "staged";
 
-  const styleFiles = formData.getAll("styleImages").filter((item): item is File => item instanceof File && item.size > 0);
+  const sceneFiles = formData.getAll("sceneImages").filter((item): item is File => item instanceof File && item.size > 0);
+  const poseFiles = formData.getAll("poseImages").filter((item): item is File => item instanceof File && item.size > 0);
+  const outfitFiles = formData.getAll("outfitImages").filter((item): item is File => item instanceof File && item.size > 0);
+  const legacyStyleFiles = formData.getAll("styleImages").filter((item): item is File => item instanceof File && item.size > 0);
   const characterFiles = formData.getAll("characterImages").filter((item): item is File => item instanceof File && item.size > 0);
-  const allFiles = [...styleFiles, ...characterFiles];
+  const roleFiles = [...sceneFiles, ...poseFiles, ...outfitFiles, ...legacyStyleFiles];
+  const allFiles = [...roleFiles, ...characterFiles];
+  const useSceneOnlySource = String(formData.get("useSceneOnlySource") ?? "false") === "true";
 
-  if (prompt.length < 3 && styleFiles.length === 0) return { error: "Enter a prompt or upload a style reference image.", status: 400 } as const;
+  if (prompt.length < 3 && roleFiles.length === 0) return { error: "Enter a prompt or upload a Scene/Bg, Pose, or Outfit reference image.", status: 400 } as const;
+  if (useSceneOnlySource && sceneFiles.length === 0) return { error: "Upload Image 1 Scene/Bg before using it as the only source.", status: 400 } as const;
+  if (sceneFiles.length > 1 || poseFiles.length > 1 || outfitFiles.length > 1) return { error: "Upload at most one image for each Scene/Bg, Pose, and Outfit slot.", status: 400 } as const;
   if (prompt.length > 4000) return { error: "Prompt is too long. Keep it under 4000 characters.", status: 400 } as const;
 
   if (allFiles.length > maxReferenceImages) return { error: `Upload at most ${maxReferenceImages} reference images.`, status: 400 } as const;
@@ -110,8 +130,11 @@ export async function createImageJob(formData: FormData) {
     constraints,
     safetyMode,
     generationFlow,
-    styleImages: await Promise.all(styleFiles.map(fileToStoredImage)),
+    sceneImages: await Promise.all(sceneFiles.map(fileToStoredImage)),
+    poseImages: await Promise.all(poseFiles.map(fileToStoredImage)),
+    outfitImages: await Promise.all([...outfitFiles, ...legacyStyleFiles].map(fileToStoredImage)),
     characterImages: await Promise.all(characterFiles.map(fileToStoredImage)),
+    useSceneOnlySource,
   };
 
   const id = crypto.randomUUID();
@@ -149,12 +172,18 @@ async function runJob(id: string, input: JobInput) {
     setJob(id, { status: "running", progress: 18, message: "Preparing prompt and references" });
     const size = resolveAzureSize(input.aspectRatio, input.quality);
     const quality = resolveAzureQuality(input.quality);
-    const useStagedFlow = input.generationFlow === "staged" && input.styleImages.length > 0;
+    const roleImageCount = input.sceneImages.length + input.poseImages.length + input.outfitImages.length;
+    const useStagedFlow = input.generationFlow === "staged" && roleImageCount > 0;
 
     if (useStagedFlow) {
-      setJob(id, { progress: 24, message: "Analyzing outfit reference" });
-      const analyzedStyle = await analyzeStyleReferences(input.styleImages);
-      const finalPrompt = buildPrompt(input, input.styleImages.length, input.characterImages.length, analyzedStyle, true);
+      setJob(id, { progress: 24, message: "Analyzing scene, pose, and outfit references" });
+      const analyzedStyle = await analyzeStyleReferencesByRole({
+        sceneImages: input.sceneImages,
+        poseImages: input.poseImages,
+        outfitImages: input.outfitImages,
+        useSceneOnlySource: input.useSceneOnlySource,
+      });
+      const finalPrompt = buildPrompt(input, { sceneCount: input.sceneImages.length, poseCount: input.poseImages.length, outfitCount: input.outfitImages.length, characterCount: input.characterImages.length, analyzedStyle, styleImagesAnalyzed: true, useSceneOnlySource: input.useSceneOnlySource });
 
       setJob(id, { progress: 36, message: "Creating safe fashion base image" });
       const heartbeat = startProgressHeartbeat(id);
@@ -179,8 +208,8 @@ async function runJob(id: string, input: JobInput) {
       return;
     }
 
-    const finalPrompt = buildPrompt(input, input.styleImages.length, input.characterImages.length);
-    const allImages = [...input.styleImages, ...input.characterImages];
+    const finalPrompt = buildPrompt(input, { sceneCount: input.sceneImages.length, poseCount: input.poseImages.length, outfitCount: input.outfitImages.length, characterCount: input.characterImages.length });
+    const allImages = [...input.sceneImages, ...input.poseImages, ...input.outfitImages, ...input.characterImages];
 
     setJob(id, { progress: 36, message: allImages.length ? "Sending references to Azure GPT Image" : "Sending prompt to Azure GPT Image" });
     const heartbeat = startProgressHeartbeat(id);
@@ -243,13 +272,13 @@ function startProgressHeartbeat(id: string) {
   }, 2500);
 }
 
-function buildPrompt(settings: PromptSettings, styleCount: number, characterCount: number, analyzedStyle = "", styleImagesAnalyzed = false) {
-  if (settings.safetyMode === "catalog") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: strictCatalogConstraints(settings.constraints) }, styleCount, characterCount, "catalog", analyzedStyle, styleImagesAnalyzed);
-  if (settings.safetyMode === "safe") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: sanitizeFashionPrompt(settings.constraints) }, styleCount, characterCount, "safe", analyzedStyle, styleImagesAnalyzed);
-  return buildPromptFromSettings(settings, styleCount, characterCount, "creative", analyzedStyle, styleImagesAnalyzed);
+function buildPrompt(settings: PromptSettings, references: ReferenceContext) {
+  if (settings.safetyMode === "catalog") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: strictCatalogConstraints(settings.constraints) }, references, "catalog");
+  if (settings.safetyMode === "safe") return buildPromptFromSettings({ ...settings, prompt: sanitizeFashionPrompt(settings.prompt), constraints: sanitizeFashionPrompt(settings.constraints) }, references, "safe");
+  return buildPromptFromSettings(settings, references, "creative");
 }
 
-function buildPromptFromSettings(settings: PromptSettings, styleCount: number, characterCount: number, safetyMode: "creative" | "safe" | "catalog", analyzedStyle = "", styleImagesAnalyzed = false) {
+function buildPromptFromSettings(settings: PromptSettings, references: ReferenceContext, safetyMode: "creative" | "safe" | "catalog") {
   const sections = [
     section("Creative direction", settings.prompt),
     section("Scene", settings.scene),
@@ -258,22 +287,26 @@ function buildPromptFromSettings(settings: PromptSettings, styleCount: number, c
     section("Use case", settings.useCase),
     section("Constraints", settings.constraints),
     section("Safety and styling requirements", safeFashionRequirements(safetyMode)),
-    section("Reference-derived fashion specification", analyzedStyle),
+    section("Reference-derived role specification", references.analyzedStyle ?? ""),
   ].filter(Boolean) as string[];
 
+  const roleCount = references.sceneCount + references.poseCount + references.outfitCount;
   const referenceInstructions: string[] = [];
-  if (styleImagesAnalyzed && styleCount > 0) {
+  if (references.styleImagesAnalyzed && roleCount > 0) {
     referenceInstructions.push(
-      `Use the reference-derived fashion specification as visual direction for garment design, styling, scene, lighting, camera angle, composition, mood, and campaign look. The original style reference image${styleCount > 1 ? "s were" : " was"} analyzed into text and should not be treated as direct edit input.`
+      "Use the reference-derived role specification as text direction. Image 1 Scene/Bg controls scene, background, lighting, camera mood, and composition. Image 2 Pose controls only posture, framing, camera angle, and subject placement. Image 3 Outfit controls only garment design, fabric, color, styling, accessories, and footwear. Do not treat Scene/Pose/Outfit references as direct edit inputs."
     );
-  } else if (styleCount > 0) {
+    if (references.useSceneOnlySource) {
+      referenceInstructions.push("Source priority: Image 1 Scene/Bg is the primary base visual source. Pose and Outfit notes are secondary text-only direction and must not override Image 1's scene/background direction.");
+    }
+  } else if (roleCount > 0) {
     referenceInstructions.push(
-      `Use the ${styleCount} style reference image${styleCount > 1 ? "s" : ""} as visual direction for the editorial pose, scene, lighting, setting, garment styling, composition, color palette, camera angle, and mood. Create a new original professional fashion/editorial image inspired by those production choices rather than copying or editing the source photo directly.`
+      `Use the ${roleCount} role reference image${roleCount > 1 ? "s" : ""} only according to their assigned Scene/Bg, Pose, or Outfit purpose. Create a new original professional fashion/editorial image inspired by those production choices rather than copying or editing the source photo directly.`
     );
   }
-  if (characterCount > 0) {
+  if (references.characterCount > 0) {
     referenceInstructions.push(
-      `Use the ${characterCount} character reference image${characterCount > 1 ? "s" : ""} for recognizable identity, hairstyle, complexion, age range, general silhouette, posture, and styling continuity in a professional non-explicit editorial image. Do not paste, swap, or composite faces or bodies from separate images.`
+      `Use the ${references.characterCount} character reference image${references.characterCount > 1 ? "s" : ""} for recognizable identity, hairstyle, complexion, age range, general silhouette, posture, and styling continuity in a professional non-explicit editorial image. Do not paste, swap, or composite faces or bodies from separate images.`
     );
   }
   if (referenceInstructions.length > 0) sections.push(section("Reference-image instructions", referenceInstructions.join(" "))!);
