@@ -33,13 +33,23 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = await request.json();
-  const response = await fetch(`${apiUrl}/v1/tryon`, {
+  const modelImage = payload?.modelImage ?? payload?.identityImage;
+  const outfitImage = payload?.outfitImage;
+  const body = {
+    identityImages: modelImage ? [modelImage] : [],
+    outfitImage,
+    bypassCodex: true,
+    name: typeof payload?.name === "string" ? payload.name : undefined,
+    category: typeof payload?.category === "string" ? payload.category : undefined,
+  };
+
+  const response = await fetch(`${apiUrl}/v1/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
     cache: "no-store",
   });
 
