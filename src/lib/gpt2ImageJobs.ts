@@ -3,11 +3,16 @@ import { analyzeStyleReferencesByRole } from "@/lib/fashionVision";
 function getEnv(key: string): string | undefined {
   const val = process.env[key];
   if (!val) return undefined;
-  // Coolify may store values as Base64-encoded. If decoding produces a different
-  // string, it was encoded — return the decoded plain text value.
+  // Coolify may store values as Base64-encoded. Only decode if the result is
+  // valid UTF-8 without replacement characters and the length ratio is sane.
   try {
     const decoded = Buffer.from(val, "base64").toString("utf-8");
-    if (decoded !== val) return decoded;
+    const ratio = decoded.length / val.length;
+    // Valid base64 decode: decoded length ≈ input * 3/4 (no padding noise)
+    const validLength = ratio > 0.5 && ratio < 1.0;
+    // Valid UTF-8: no replacement characters (U+FFFD)
+    const validUtf8 = !decoded.includes("�");
+    if (validUtf8 && validLength && decoded !== val) return decoded;
   } catch { /* ignore */ }
   return val;
 }
