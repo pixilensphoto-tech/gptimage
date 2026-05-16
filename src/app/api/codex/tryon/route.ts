@@ -20,10 +20,13 @@ function jsonError(message: string, status = 400) {
 }
 
 export async function POST(request: NextRequest) {
-  const apiUrl = getEnv("CODEX_API_URL")?.replace(/\/$/, "");
+  const apiUrl = (
+    getEnv("CODEX_TRYON_API_URL") ??
+    "https://codeximageapi.pixilens.online"
+  ).replace(/\/$/, "");
   const apiKey = getEnv("CODEX_API_KEY");
   if (!apiUrl) {
-    return jsonError("CODEX_API_URL is not configured", 500);
+    return jsonError("CODEX_TRYON_API_URL is not configured", 500);
   }
   if (!apiKey) {
     return jsonError("CODEX_API_KEY is not configured", 500);
