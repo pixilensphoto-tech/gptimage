@@ -8,14 +8,21 @@ function jsonError(message: string, status = 400) {
 
 export async function POST(request: NextRequest) {
   const apiUrl = process.env.CODEX_API_URL?.replace(/\/$/, "");
+  const apiKey = process.env.GPTIMAGE_API_KEY;
   if (!apiUrl) {
     return jsonError("CODEX_API_URL is not configured", 500);
+  }
+  if (!apiKey) {
+    return jsonError("GPTIMAGE_API_KEY is not configured", 500);
   }
 
   const payload = await request.json();
   const response = await fetch(`${apiUrl}/v1/generate`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
     body: JSON.stringify(payload),
     cache: "no-store",
   });
