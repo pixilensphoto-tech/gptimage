@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from "react";
 import Link from "next/link";
 
 type PreviewFile = {
@@ -211,7 +211,6 @@ export default function CodexPage() {
   const [result, setResult] = useState<CodexResponse | null>(null);
 
   const canGenerate = (prompt.trim().length > 0 || identityFiles.length > 0) && !isGenerating;
-  const downloadName = result?.imgbb?.url ? "codex-image.png" : "codex-image.png";
 
   function addFiles(files: PreviewFile[], newFiles: PreviewFile[], max: number) {
     const combined = [...files, ...newFiles];
@@ -232,7 +231,7 @@ export default function CodexPage() {
   }
 
   async function handleSingleAdd(
-    setter: React.Dispatch<React.SetStateAction<PreviewFile | null>>,
+    setter: Dispatch<SetStateAction<PreviewFile | null>>,
     event: ChangeEvent<HTMLInputElement>
   ) {
     const selected = event.target.files?.[0];
@@ -246,7 +245,7 @@ export default function CodexPage() {
     }
   }
 
-  function removeFile(setter: React.Dispatch<React.SetStateAction<PreviewFile | null>>, id: string) {
+  function removeFile(setter: Dispatch<SetStateAction<PreviewFile | null>>, id: string) {
     setter((current) => {
       if (current?.id === id) {
         URL.revokeObjectURL(current.url);
@@ -314,7 +313,7 @@ export default function CodexPage() {
       setProgress(30);
       setStatusMessage("Sending request to Codex API");
 
-      const response = await fetch("https://codeximageapi-az.pixilens.online/v1/generate", {
+      const response = await fetch("/api/codex/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
