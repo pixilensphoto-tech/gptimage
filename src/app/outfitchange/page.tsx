@@ -21,6 +21,10 @@ type TryOnResponse = {
   };
 };
 
+type ApiImage = {
+  dataUrl: string;
+};
+
 export default function OutfitChangePage() {
   const [identityFile, setIdentityFile] = useState<PreviewFile | null>(null);
   const [outfitFile, setOutfitFile] = useState<PreviewFile | null>(null);
@@ -29,7 +33,6 @@ export default function OutfitChangePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TryOnResponse | null>(null);
-  const [taskId, setTaskId] = useState<string | null>(null);
 
   const canGenerate = identityFile !== null && outfitFile !== null && !isGenerating;
 
@@ -77,25 +80,23 @@ export default function OutfitChangePage() {
     setStatusMessage("Preparing images");
     setError(null);
     setResult(null);
-    setTaskId(null);
 
     try {
       setProgress(15);
       setStatusMessage("Converting images");
 
-      const identityBase64 = await fileToBase64(identityFile!.file);
-      const outfitBase64 = await fileToBase64(outfitFile!.file);
+      const identityDataUrl = await fileToBase64(identityFile!.file);
+      const outfitDataUrl = await fileToBase64(outfitFile!.file);
 
       setProgress(30);
       setStatusMessage("Sending try-on request");
 
       const payload = {
-        identityImages: [identityBase64],
-        outfitImage: outfitBase64,
-        bypassCodex: true,
+        modelImage: { dataUrl: identityDataUrl } satisfies ApiImage,
+        outfitImage: { dataUrl: outfitDataUrl } satisfies ApiImage,
       };
 
-      const response = await fetch("https://codeximageapi-az.pixilens.online/v1/generate", {
+      const response = await fetch("/api/codex/tryon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -107,104 +108,14 @@ export default function OutfitChangePage() {
       }
 
       const data = (await response.json()) as TryOnResponse;
-      setTaskId(data.runninghub?.taskId ?? null);
-      setProgress(50);
-      setStatusMessage("Processing virtual try-on (90-120 seconds)");
-
-      // Poll for result
-      await pollForResult(data.runninghub?.taskId);
+      setProgress(100);
+      setStatusMessage("Try-on complete");
+      setResult(data);
+      setIsGenerating(false);
     } catch (generationError) {
       setError(generationError instanceof Error ? generationError.message : "Try-on generation failed");
       setIsGenerating(false);
     }
-  }
-
-  async function pollForResult(initialTaskId: string | undefined) {
-    if (!initialTaskId) {
-      // If no taskId, try the try-on endpoint directly
-      setProgress(60);
-      setStatusMessage("Checking try-on status");
-      await pollTryOnEndpoint();
-      return;
-    }
-
-    setProgress(60);
-    setStatusMessage("Waiting for try-on completion (this takes 90-120 seconds)");
-
-    // Poll every 5 seconds for up to 3 minutes
-    const maxAttempts = 36;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      if (!isGenerating) return;
-
-      try {
-        const checkResponse = await fetch(`https://codeximageapi-az.pixilens.online/v1/tryon?taskId=${initialTaskId}`);
-        if (checkResponse.ok) {
-          const checkData = await checkResponse.json();
-          if (checkData.outputUrl || checkData.status === "completed") {
-            setProgress(100);
-            setStatusMessage("Try-on complete");
-            setResult({
-              pipeline: "runninghub",
-              runninghub: {
-                taskId: initialTaskId,
-                outputUrl: checkData.outputUrl ?? checkData.imgbb?.url ?? "",
-                workflowId: checkData.workflowId ?? "",
-              },
-              imgbb: checkData.imgbb,
-            });
-            setIsGenerating(false);
-            return;
-          }
-        }
-      } catch {
-        // Continue polling
-      }
-
-      setProgress(60 + Math.round((attempt / maxAttempts) * 35));
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
-
-    setError("Try-on is taking longer than expected. Please check back later.");
-    setIsGenerating(false);
-  }
-
-  async function pollTryOnEndpoint() {
-    const maxAttempts = 36;
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      if (!isGenerating) return;
-
-      setProgress(60 + Math.round((attempt / maxAttempts) * 35));
-      setStatusMessage(`Checking status... (${attempt + 1}/${maxAttempts})`);
-
-      try {
-        const checkResponse = await fetch("https://codeximageapi-az.pixilens.online/v1/tryon/status");
-        if (checkResponse.ok) {
-          const checkData = await checkResponse.json();
-          if (checkData.outputUrl || checkData.imgbb?.url) {
-            setProgress(100);
-            setStatusMessage("Try-on complete");
-            setResult({
-              pipeline: "runninghub",
-              runninghub: {
-                taskId: checkData.taskId ?? "",
-                outputUrl: checkData.outputUrl ?? "",
-                workflowId: checkData.workflowId ?? "",
-              },
-              imgbb: checkData.imgbb,
-            });
-            setIsGenerating(false);
-            return;
-          }
-        }
-      } catch {
-        // Continue polling
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
-
-    setError("Try-on is taking longer than expected. Please check back later.");
-    setIsGenerating(false);
   }
 
   return (
@@ -358,7 +269,6 @@ export default function OutfitChangePage() {
                     <div className="h-2 overflow-hidden rounded-full bg-slate-800">
                       <div className="h-full rounded-full bg-fuchsia-300 transition-all duration-500" style={{ width: `${progress}%` }} />
                     </div>
-                    {taskId && <p className="mt-2 text-center text-xs text-slate-400">Task ID: {taskId}</p>}
                   </div>
                 ) : null}
                 {error ? <p className="rounded-2xl bg-red-500/10 p-4 text-sm text-red-200">{error}</p> : null}

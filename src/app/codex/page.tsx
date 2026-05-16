@@ -17,6 +17,10 @@ type CodexResponse = {
   imgbb?: { url: string };
 };
 
+type ApiImage = {
+  dataUrl: string;
+};
+
 const qualityOptions = ["1K", "2K", "4K"];
 
 const aspectRatioOptions = [
@@ -24,9 +28,9 @@ const aspectRatioOptions = [
   "16:9",
   "1:1",
   "4:3",
-  "3:2",
-  "2:3",
-  "1.91:1",
+  "3:4",
+  "4:5",
+  "5:4",
 ];
 
 const categoryOptions = [
@@ -272,6 +276,10 @@ export default function CodexPage() {
     });
   }
 
+  function toApiImage(dataUrl: string): ApiImage {
+    return { dataUrl };
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canGenerate) return;
@@ -286,10 +294,10 @@ export default function CodexPage() {
       setProgress(10);
       setStatusMessage("Preparing images");
 
-      const identityBase64 = await Promise.all(identityFiles.map((f) => fileToBase64(f.file)));
-      const outfitBase64 = outfitFile ? await fileToBase64(outfitFile.file) : undefined;
-      const poseBase64 = poseFile ? await fileToBase64(poseFile.file) : undefined;
-      const backgroundBase64 = backgroundFile ? await fileToBase64(backgroundFile.file) : undefined;
+      const identityDataUrls = await Promise.all(identityFiles.map((f) => fileToBase64(f.file)));
+      const outfitDataUrl = outfitFile ? await fileToBase64(outfitFile.file) : undefined;
+      const poseDataUrl = poseFile ? await fileToBase64(poseFile.file) : undefined;
+      const backgroundDataUrl = backgroundFile ? await fileToBase64(backgroundFile.file) : undefined;
 
       const payload: Record<string, unknown> = {
         quality,
@@ -298,10 +306,10 @@ export default function CodexPage() {
       };
 
       if (prompt.trim()) payload.prompt = prompt.trim();
-      if (identityBase64.length > 0) payload.identityImages = identityBase64;
-      if (outfitBase64) payload.outfitImage = outfitBase64;
-      if (poseBase64) payload.poseImage = poseBase64;
-      if (backgroundBase64) payload.backgroundImage = backgroundBase64;
+      if (identityDataUrls.length > 0) payload.identityImages = identityDataUrls.map(toApiImage);
+      if (outfitDataUrl) payload.outfitImage = toApiImage(outfitDataUrl);
+      if (poseDataUrl) payload.poseImage = toApiImage(poseDataUrl);
+      if (backgroundDataUrl) payload.backgroundImage = toApiImage(backgroundDataUrl);
       if (category) payload.category = category;
       if (scene) payload.scene = scene;
       if (style) payload.style = style;

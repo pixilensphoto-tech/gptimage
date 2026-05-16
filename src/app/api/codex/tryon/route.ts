@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = await request.json();
-  const response = await fetch(`${apiUrl}/v1/generate`, {
+  const response = await fetch(`${apiUrl}/v1/tryon`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
