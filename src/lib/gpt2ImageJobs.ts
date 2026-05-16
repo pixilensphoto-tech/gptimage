@@ -422,7 +422,7 @@ async function callAzureGenerations(prompt: string, size: string, quality: strin
   // FOUNDRY_* env vars may be Base64-encoded by Coolify — decode them at runtime
   const endpoint = (getEnv("FOUNDRY_OPENAI_ENDPOINT") ?? process.env.AZURE_OPENAI_ENDPOINT)?.replace(/\/$/, "");
   const apiKey = getEnv("FOUNDRY_OPENAI_API_KEY") ?? process.env.AZURE_OPENAI_API_KEY;
-  const deployment = getEnv("FOUNDRY_OPENAI_DEPLOYMENT") ?? "gpt-image-2";
+  const deployment = getEnv("FOUNDRY_OPENAI_DEPLOYMENT") ?? "gpt-image-1-relaxed";
   const apiVersion = getEnv("FOUNDRY_OPENAI_API_VERSION") ?? "2025-04-01-preview";
 
   if (!endpoint || !apiKey) return { error: "Azure image generation is not configured", status: 500 } as const;
@@ -443,7 +443,7 @@ async function callAzureEdits(prompt: string, files: StoredImage[], size: string
   // FOUNDRY_* env vars may be Base64-encoded by Coolify — decode them at runtime
   const endpoint = (getEnv("FOUNDRY_OPENAI_ENDPOINT") ?? process.env.AZURE_OPENAI_ENDPOINT)?.replace(/\/$/, "");
   const apiKey = getEnv("FOUNDRY_OPENAI_API_KEY") ?? process.env.AZURE_OPENAI_API_KEY;
-  const deployment = getEnv("FOUNDRY_OPENAI_DEPLOYMENT") ?? "gpt-image-2";
+  const deployment = getEnv("FOUNDRY_OPENAI_DEPLOYMENT") ?? "gpt-image-1-relaxed";
   const apiVersion = getEnv("FOUNDRY_OPENAI_API_VERSION") ?? "2025-04-01-preview";
 
   if (!endpoint || !apiKey) return { error: "Azure image generation is not configured", status: 500 } as const;
