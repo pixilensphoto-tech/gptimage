@@ -213,7 +213,7 @@ async function runChainedTryOn(payload: CodexPayload, codexResult: CodexJobResul
   }
 
   const body = {
-    identityImages: [{ url: codexImageUrl }],
+    identityImages: [{ dataUrl: codexImageUrl }],
     outfitImage: payload.outfitImage,
     bypassCodex: true,
     aspectRatio: typeof payload.aspectRatio === "string" ? payload.aspectRatio : undefined,
