@@ -27,41 +27,60 @@ The Azure key must stay in local/Coolify environment variables and must not be c
 - **Build pack:** Dockerfile (port 3000)
 - **Config dir:** `/data/coolify/applications/vgssg8okkk44swoc80gwckoo/`
 
-### Known Issue: Container Vanishes After Deploy
+### Known Deployment Drift: stale host compose can override Coolify
 
-Coolify runs `docker compose up` inside an ephemeral build container with `--project-directory /artifacts/{deploy-uuid}/`. When that build container is auto-removed (`--rm`), Docker Compose loses the project metadata and garbage-collects the app container and image.
+This app must be left on the normal Coolify-managed Dockerfile deployment path. A previous host-side workaround in `/data/coolify/applications/vgssg8okkk44swoc80gwckoo/post-deploy.sh` re-ran `docker compose up` from the persistent config directory after each deployment.
 
-This is a Coolify bug affecting non-build-server dockerfile apps. The compose file IS written to the host config dir, but the compose project was registered with the now-dead artifacts path.
+That recovery script eventually became the real problem: it recreated an old manually-pinned container from the host `docker-compose.yaml`, including stale Traefik/Caddy labels, after Coolify had already completed a successful rollout.
 
-### Watchdog (Automated Fix)
+Symptoms:
 
-A cron watchdog on the Priyanka server detects when the container or compose project is missing and re-ups from the persistent host compose file.
+- Coolify deployment shows `finished` for the correct commit.
+- `SOURCE_COMMIT` in `/data/coolify/applications/vgssg8okkk44swoc80gwckoo/.env` is current.
+- `docker ps` still shows an old container such as `gptimage-manual-test:latest`.
+- The app may still respond on `gptimage.pixilens.app`, but it is being served by the stale container instead of the repo-backed rollout.
 
-| Item | Path |
-|------|------|
-| Cron job | `/etc/cron.d/gptimage-watchdog` |
-| Script | `/data/coolify/applications/vgssg8okkk44swoc80gwckoo/post-deploy.sh` |
-| Log | `/var/log/gptimage-watchdog.log` |
+How it was confirmed:
 
-Runs every minute as root. No manual intervention needed after pushing code and deploying from Coolify UI.
+- `post-deploy.sh` contained `docker compose up -d` recovery logic.
+- `/var/log/gptimage-watchdog.log` showed that script recreating the stale container from the host compose directory.
+- Coolify deployment logs showed normal rollouts creating and removing repo-backed containers, which proved the lingering runtime was outside the intended rollout lifecycle.
+
+Current fix:
+
+- Disable the host recovery hook by replacing `/data/coolify/applications/vgssg8okkk44swoc80gwckoo/post-deploy.sh` with:
+
+```sh
+#!/bin/sh
+exit 0
+```
+
+- Trigger a fresh Coolify deployment.
+- Remove any lingering stale container manually if it still exists after the clean rollout.
 
 ### Debugging
 
 ```bash
-# Check if container is running
-ssh priyanka "sudo docker ps --filter label=coolify.name=vgssg8okkk44swoc80gwckoo"
+# Check latest deployments
+ssh priyanka "/home/priyanka/go/bin/coolify --context Coolify1 app deployments list vgssg8okkk44swoc80gwckoo --format json"
 
-# Check watchdog log
+# Check what is actually serving the app
+ssh priyanka "sudo docker ps --format '{{.Names}}|{{.Image}}|{{.Status}}' | grep 'vgssg8okkk44swoc80gwckoo'"
+
+# Inspect the host-side hook
+ssh priyanka "sudo sed -n '1,120p' /data/coolify/applications/vgssg8okkk44swoc80gwckoo/post-deploy.sh"
+
+# Check whether the old watchdog recreated anything
 ssh priyanka "sudo tail -20 /var/log/gptimage-watchdog.log"
 
-# Check compose project is registered
-ssh priyanka "sudo docker compose ls | grep vgssg8"
+# Inspect labels on a suspicious container
+ssh priyanka "sudo docker inspect <container-name> --format '{{json .Config.Labels}}'"
 
-# Manually re-up if needed
-ssh priyanka "sudo sh -c 'cd /data/coolify/applications/vgssg8okkk44swoc80gwckoo && docker compose up -d'"
+# Remove a stale container after the hook has been disabled
+ssh priyanka "sudo docker stop -t 30 <container-name> && sudo docker rm -f <container-name>"
 
-# View deployment logs in Coolify DB
-ssh priyanka "sudo docker exec coolify-db psql -U coolify -d coolify -c \"SELECT created_at, status FROM application_deployment_queues WHERE application_id = '37' ORDER BY created_at DESC LIMIT 5\""
+# View deployment rows in Coolify DB
+ssh priyanka "sudo docker exec coolify-db psql -U coolify -d coolify -c \"SELECT created_at, deployment_uuid, status, commit FROM application_deployment_queues WHERE application_id = '37' ORDER BY created_at DESC LIMIT 10\""
 ```
 
 ### Try-On API Route
