@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DeleteImageButton from "./DeleteImageButton";
 import { listGalleryItems, type GalleryItem } from "@/lib/galleryDb";
 
 export const dynamic = "force-dynamic";
@@ -115,15 +116,18 @@ export default async function ImagesPage() {
                     </div>
 
                     {imageUrl ? (
-                      <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+                      <div className="grid grid-cols-3 gap-2 text-xs font-semibold">
                         <a href={imageUrl} target="_blank" rel="noreferrer" className="rounded-full bg-cyan-300 px-3 py-2 text-center text-slate-950 hover:bg-cyan-200">
                           Open image
                         </a>
                         <a href={imageUrl} download className="rounded-full border border-white/10 px-3 py-2 text-center text-slate-200 hover:border-cyan-200/40 hover:text-white">
                           Download
                         </a>
+                        <DeleteImageButton id={item.id} />
                       </div>
-                    ) : null}
+                    ) : (
+                      <DeleteImageButton id={item.id} />
+                    )}
                   </div>
                 </article>
               );

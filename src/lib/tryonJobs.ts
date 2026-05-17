@@ -5,7 +5,7 @@ type TryOnPayload = Record<string, unknown>;
 type TryOnResult = {
   pipeline: "runninghub";
   runninghub?: { taskId: string; outputUrl: string; workflowId: string };
-  imgbb?: { url: string };
+  imgbb?: { url: string; viewerUrl?: string; displayUrl?: string; deleteUrl?: string };
 };
 
 type AsyncTryOnJob = {

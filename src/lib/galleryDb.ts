@@ -250,6 +250,12 @@ export async function getGalleryItem(id: string) {
   return result.rows[0] ? mapRow(result.rows[0]) : null;
 }
 
+export async function deleteGalleryItem(id: string) {
+  await ensureSchema();
+  const result = await getPool().query<GalleryRowRecord>("delete from codeximg.generated_images where id = $1 returning *", [id]);
+  return result.rows[0] ? mapRow(result.rows[0]) : null;
+}
+
 export async function listGalleryItems(limit = 100) {
   await ensureSchema();
   const result = await getPool().query<GalleryRowRecord>(

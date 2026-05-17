@@ -292,24 +292,6 @@ export default function OutfitChangePage() {
           </form>
         </div>
 
-        <section className="rounded-[2rem] border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-black/30 backdrop-blur md:p-8">
-          <div className="flex min-h-[20rem] items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
-            {isGenerating ? (
-              <div className="flex max-w-md flex-col items-center px-6 text-center text-slate-300">
-                <div className="mb-5 h-14 w-14 animate-spin rounded-full border-4 border-fuchsia-300/20 border-t-fuchsia-200" />
-                <p className="text-lg font-semibold text-white">Starting virtual try-on</p>
-                <p className="mt-2 text-sm text-slate-400">{statusMessage || "Your request is being added to the Images gallery."}</p>
-                <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                  <div className="h-full rounded-full bg-fuchsia-300 transition-all duration-500" style={{ width: `${progress}%` }} />
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-md px-6 text-center text-slate-400">
-                Submit a try-on request and track the placeholder plus final result in the Images gallery.
-              </div>
-            )}
-          </div>
-        </section>
       </div>
     </main>
   );

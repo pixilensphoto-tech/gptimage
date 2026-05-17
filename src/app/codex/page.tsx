@@ -10,15 +10,6 @@ type PreviewFile = {
   id: string;
 };
 
-type CodexResponse = {
-  pipeline: "codex" | "runninghub";
-  dimensions?: { width: number; height: number };
-  codex?: { notes: string };
-  runninghub?: { taskId: string; outputUrl: string; workflowId: string };
-  imgbb?: { url: string };
-  usedFallback?: boolean;
-};
-
 type CodexSubmitResponse = {
   id?: string;
   jobId?: string;
@@ -213,7 +204,6 @@ export default function CodexPage() {
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<CodexResponse | null>(null);
 
   const canGenerate = (prompt.trim().length > 0 || identityFiles.length > 0) && !isGenerating;
 
@@ -289,7 +279,6 @@ export default function CodexPage() {
     setProgress(0);
     setStatusMessage("Starting generation");
     setError(null);
-    setResult(null);
 
     try {
       setProgress(10);
@@ -492,45 +481,6 @@ export default function CodexPage() {
             />
           </section>
         </form>
-
-        <section className="rounded-[2rem] border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-black/30 backdrop-blur md:p-8">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div>
-              <h2 className="text-2xl font-semibold text-white">Generated result</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                {result?.pipeline === "runninghub" ? "RunningHub try-on pipeline (90-120s)" : "Codex AI generation pipeline"}
-              </p>
-            </div>
-            {result?.imgbb?.url ? (
-              <a
-                href={result.imgbb.url}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-violet-100"
-              >
-                Open image
-              </a>
-            ) : null}
-          </div>
-          <div className="mt-6 flex min-h-[28rem] items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
-            {result?.imgbb?.url ? (
-              <img src={result.imgbb.url} alt="Generated" className="max-h-[70vh] w-full object-contain" />
-            ) : isGenerating ? (
-              <div className="flex max-w-md flex-col items-center px-6 text-center text-slate-300">
-                <div className="mb-5 h-14 w-14 animate-spin rounded-full border-4 border-violet-300/20 border-t-violet-200" />
-                <p className="text-lg font-semibold text-white">Generating your image</p>
-                <p className="mt-2 text-sm text-slate-400">{statusMessage || "This may take a few moments..."}</p>
-                <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                  <div className="h-full rounded-full bg-violet-300 transition-all duration-500" style={{ width: `${progress}%` }} />
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-md px-6 text-center text-slate-400">
-                Your generated image will appear here. Add a prompt and identity reference to begin.
-              </div>
-            )}
-          </div>
-        </section>
       </div>
     </main>
   );

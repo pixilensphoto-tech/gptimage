@@ -9,7 +9,7 @@ type CodexPayload = Record<string, unknown>;
 type TryOnResult = {
   pipeline: "runninghub";
   runninghub?: { taskId: string; outputUrl: string; workflowId: string };
-  imgbb?: { url: string };
+  imgbb?: { url: string; viewerUrl?: string; displayUrl?: string; deleteUrl?: string };
 };
 
 export type CodexJobResult = {
@@ -17,7 +17,7 @@ export type CodexJobResult = {
   dimensions?: { width: number; height: number };
   codex?: { notes: string };
   runninghub?: { taskId: string; outputUrl: string; workflowId: string };
-  imgbb?: { url: string };
+  imgbb?: { url: string; viewerUrl?: string; displayUrl?: string; deleteUrl?: string };
   usedFallback?: boolean;
   chainedTryOn?: TryOnResult;
 };
