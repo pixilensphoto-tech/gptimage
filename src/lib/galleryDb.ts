@@ -115,7 +115,9 @@ function getPool() {
     ? sslCert && sslKey
       ? { rejectUnauthorized: true, ca: sslCa, cert: sslCert, key: sslKey }
       : { rejectUnauthorized: true, ca: sslCa }
-    : false;
+    : getEnv("DATABASE_URL")?.match(/(?:\?|&)sslmode=require(?:&|$)/i)
+      ? { rejectUnauthorized: false }
+      : false;
 
   const normalizedConnectionString = connectionString?.replace(/([?&])sslmode=[^&]*&?/i, "$1").replace(/[?&]$/, "");
 
