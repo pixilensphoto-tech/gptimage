@@ -38,10 +38,10 @@ const features = [
     accentColor: "hover:border-fuchsia-200/60",
   },
   {
-    href: "/imagesearch",
-    title: "Image Search",
-    description: "Search and collect visual references for pose, styling, lighting, and scene direction.",
-    icon: "IS",
+    href: "/images",
+    title: "Images Gallery",
+    description: "Track pending, completed, and failed generations across Codex, try-on, and the shared image pipelines.",
+    icon: "IM",
     color: "teal",
     gradient: "from-teal-300 to-teal-400",
     borderColor: "border-teal-300/40",
@@ -110,7 +110,7 @@ export default function Home() {
         </section>
 
         <footer className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 text-center text-sm text-slate-400 backdrop-blur">
-          All image outputs are returned to your browser session only and are not stored on any server.
+          Generation requests create durable gallery records so you can return later and review pending, completed, and failed images.
         </footer>
       </div>
     </main>

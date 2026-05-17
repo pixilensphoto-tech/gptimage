@@ -396,8 +396,8 @@ export default function Gpt2Page() {
             <Link href="/outfitchange" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
               Outfit Change
             </Link>
-            <Link href="/imagesearch" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
-              Image Search
+            <Link href="/images" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
+              Images
             </Link>
             <div className="hidden h-10 w-10 animate-pulse rounded-full bg-gradient-to-br from-cyan-300 via-fuchsia-300 to-violet-400 blur-sm md:block" />
           </nav>
@@ -519,7 +519,7 @@ export default function Gpt2Page() {
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
               <h2 className="text-2xl font-semibold text-white">Generated result</h2>
-              <p className="mt-2 text-sm text-slate-400">Outputs are returned to this browser session only.</p>
+              <p className="mt-2 text-sm text-slate-400">This page still shows the immediate result while the shared Images gallery becomes the durable output history.</p>
             </div>
             {result ? (
               <a

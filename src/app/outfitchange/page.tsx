@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type PreviewFile = {
   file: File;
@@ -9,30 +10,30 @@ type PreviewFile = {
   id: string;
 };
 
-type TryOnResponse = {
-  pipeline: "runninghub";
-  runninghub: {
-    taskId: string;
-    outputUrl: string;
-    workflowId: string;
-  };
-  imgbb?: {
-    url: string;
-  };
+type TryOnSubmitResponse = {
+  id?: string;
+  status: "pending" | "processing" | "succeeded" | "failed";
+  progress: number;
+  message: string;
+  error?: string;
+  galleryUrl?: string;
 };
+
+const aspectRatioOptions = ["9:16", "16:9", "1:1", "4:3", "3:4", "4:5", "5:4"];
 
 type ApiImage = {
   dataUrl: string;
 };
 
 export default function OutfitChangePage() {
+  const router = useRouter();
   const [identityFile, setIdentityFile] = useState<PreviewFile | null>(null);
   const [outfitFile, setOutfitFile] = useState<PreviewFile | null>(null);
+  const [aspectRatio, setAspectRatio] = useState(aspectRatioOptions[0]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<TryOnResponse | null>(null);
 
   const canGenerate = identityFile !== null && outfitFile !== null && !isGenerating;
 
@@ -79,7 +80,6 @@ export default function OutfitChangePage() {
     setProgress(0);
     setStatusMessage("Preparing images");
     setError(null);
-    setResult(null);
 
     try {
       setProgress(15);
@@ -94,6 +94,7 @@ export default function OutfitChangePage() {
       const payload = {
         modelImage: { dataUrl: identityDataUrl } satisfies ApiImage,
         outfitImage: { dataUrl: outfitDataUrl } satisfies ApiImage,
+        aspectRatio,
       };
 
       const response = await fetch("/api/codex/tryon", {
@@ -102,15 +103,15 @@ export default function OutfitChangePage() {
         body: JSON.stringify(payload),
       });
 
+      const data = (await response.json()) as TryOnSubmitResponse;
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as { error?: string }).error ?? "Try-on generation failed");
+        throw new Error(data.error ?? "Try-on generation failed");
       }
 
-      const data = (await response.json()) as TryOnResponse;
       setProgress(100);
-      setStatusMessage("Try-on complete");
-      setResult(data);
+      setStatusMessage(data.message || "Try-on started");
+      router.push(data.galleryUrl ?? "/images");
       setIsGenerating(false);
     } catch (generationError) {
       setError(generationError instanceof Error ? generationError.message : "Try-on generation failed");
@@ -140,8 +141,8 @@ export default function OutfitChangePage() {
             <Link href="/codex" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
               Codex
             </Link>
-            <Link href="/imagesearch" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
-              Image Search
+            <Link href="/images" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
+              Images
             </Link>
             <div className="hidden h-10 w-10 animate-pulse rounded-full bg-gradient-to-br from-fuchsia-300 via-violet-300 to-cyan-400 blur-sm md:block" />
           </nav>
@@ -230,6 +231,20 @@ export default function OutfitChangePage() {
             <section className="flex flex-col justify-center">
               <div className="space-y-6">
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
+                  <label className="mb-5 block text-left">
+                    <span className="text-sm font-medium text-slate-200">Aspect Ratio</span>
+                    <select
+                      value={aspectRatio}
+                      onChange={(event) => setAspectRatio(event.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 py-3 pl-4 pr-12 text-sm text-white outline-none ring-fuchsia-300/40 transition focus:ring-4"
+                    >
+                      {aspectRatioOptions.map((option) => (
+                        <option key={option} value={option} className="bg-slate-950 text-white">
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <h3 className="mb-4 text-lg font-semibold text-white">How it works</h3>
                   <ol className="space-y-3 text-left text-sm text-slate-300">
                     <li className="flex gap-3">
@@ -242,7 +257,7 @@ export default function OutfitChangePage() {
                     </li>
                     <li className="flex gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fuchsia-300/20 text-xs font-bold text-fuchsia-100">3</span>
-                      Click &quot;Try On&quot; and wait 90-120 seconds
+                      Click &quot;Try On&quot; and check the Images gallery while it processes
                     </li>
                     <li className="flex gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-fuchsia-300/20 text-xs font-bold text-fuchsia-100">4</span>
@@ -278,48 +293,19 @@ export default function OutfitChangePage() {
         </div>
 
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-black/30 backdrop-blur md:p-8">
-          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div>
-              <h2 className="text-2xl font-semibold text-white">Try-on Result</h2>
-              <p className="mt-2 text-sm text-slate-400">Virtual garment swap result</p>
-            </div>
-            {result?.imgbb?.url ? (
-              <a
-                href={result.imgbb.url}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-fuchsia-100"
-              >
-                Open image
-              </a>
-            ) : result?.runninghub?.outputUrl ? (
-              <a
-                href={result.runninghub.outputUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-fuchsia-100"
-              >
-                Open image
-              </a>
-            ) : null}
-          </div>
-          <div className="mt-6 flex min-h-[28rem] items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
-            {result?.imgbb?.url ? (
-              <img src={result.imgbb.url} alt="Try-on result" className="max-h-[70vh] w-full object-contain" />
-            ) : result?.runninghub?.outputUrl ? (
-              <img src={result.runninghub.outputUrl} alt="Try-on result" className="max-h-[70vh] w-full object-contain" />
-            ) : isGenerating ? (
+          <div className="flex min-h-[20rem] items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/30">
+            {isGenerating ? (
               <div className="flex max-w-md flex-col items-center px-6 text-center text-slate-300">
                 <div className="mb-5 h-14 w-14 animate-spin rounded-full border-4 border-fuchsia-300/20 border-t-fuchsia-200" />
-                <p className="text-lg font-semibold text-white">Processing virtual try-on</p>
-                <p className="mt-2 text-sm text-slate-400">{statusMessage || "This takes 90-120 seconds. Please wait..."}</p>
+                <p className="text-lg font-semibold text-white">Starting virtual try-on</p>
+                <p className="mt-2 text-sm text-slate-400">{statusMessage || "Your request is being added to the Images gallery."}</p>
                 <div className="mt-6 h-2 w-full overflow-hidden rounded-full bg-slate-800">
                   <div className="h-full rounded-full bg-fuchsia-300 transition-all duration-500" style={{ width: `${progress}%` }} />
                 </div>
               </div>
             ) : (
               <div className="max-w-md px-6 text-center text-slate-400">
-                Upload a model photo and garment to generate a virtual try-on.
+                Submit a try-on request and track the placeholder plus final result in the Images gallery.
               </div>
             )}
           </div>

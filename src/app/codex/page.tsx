@@ -2,6 +2,7 @@
 
 import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type PreviewFile = {
   file: File;
@@ -15,6 +16,17 @@ type CodexResponse = {
   codex?: { notes: string };
   runninghub?: { taskId: string; outputUrl: string; workflowId: string };
   imgbb?: { url: string };
+  usedFallback?: boolean;
+};
+
+type CodexSubmitResponse = {
+  id?: string;
+  jobId?: string;
+  status: "pending" | "processing" | "succeeded" | "failed";
+  progress: number;
+  message: string;
+  error?: string;
+  galleryUrl?: string;
 };
 
 type ApiImage = {
@@ -96,17 +108,6 @@ const constraintOptions = [
   "Professional retouching",
   "Brand-safe styling",
   "Editorial quality output",
-];
-
-const avoidOptions = [
-  "Avoid cluttered backgrounds",
-  "Avoid overexposed areas",
-  "Avoid soft/blurry output",
-  "Avoid cartoon style",
-  "Avoid illustration look",
-  "Avoid duplicate limbs",
-  "Avoid distorted face",
-  "Avoid low-quality artifacts",
 ];
 
 function SelectField({
@@ -193,6 +194,7 @@ function UploadPanel({
 }
 
 export default function CodexPage() {
+  const router = useRouter();
   const [prompt, setPrompt] = useState("");
   const [identityFiles, setIdentityFiles] = useState<PreviewFile[]>([]);
   const [outfitFile, setOutfitFile] = useState<PreviewFile | null>(null);
@@ -207,7 +209,6 @@ export default function CodexPage() {
   const [composition, setComposition] = useState("");
   const [materials, setMaterials] = useState("");
   const [constraints, setConstraints] = useState(constraintOptions[0]);
-  const [avoid, setAvoid] = useState(avoidOptions[0]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
@@ -316,10 +317,9 @@ export default function CodexPage() {
       if (composition) payload.composition = composition;
       if (materials) payload.materials = materials;
       if (constraints) payload.constraints = constraints;
-      if (avoid) payload.avoid = avoid;
 
       setProgress(30);
-      setStatusMessage("Sending request to Codex API");
+      setStatusMessage("Submitting generation job");
 
       const response = await fetch("/api/codex/generate", {
         method: "POST",
@@ -327,17 +327,15 @@ export default function CodexPage() {
         body: JSON.stringify(payload),
       });
 
-      setProgress(80);
+      const data = (await response.json()) as CodexSubmitResponse;
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as { error?: string }).error ?? "Codex generation failed");
+        throw new Error(data.error ?? "Codex generation failed");
       }
 
-      const data = (await response.json()) as CodexResponse;
       setProgress(100);
-      setStatusMessage("Image ready");
-      setResult(data);
+      setStatusMessage(data.message || "Generation started");
+      router.push(data.galleryUrl ?? "/images");
     } catch (generationError) {
       setError(generationError instanceof Error ? generationError.message : "Image generation failed");
     } finally {
@@ -367,8 +365,8 @@ export default function CodexPage() {
             <Link href="/outfitchange" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
               Outfit Change
             </Link>
-            <Link href="/imagesearch" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
-              Image Search
+            <Link href="/images" className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200/40 hover:text-white">
+              Images
             </Link>
             <div className="hidden h-10 w-10 animate-pulse rounded-full bg-gradient-to-br from-violet-300 via-fuchsia-300 to-cyan-400 blur-sm md:block" />
           </nav>
@@ -431,8 +429,8 @@ export default function CodexPage() {
                 className="mt-1 h-4 w-4 rounded border-white/20 bg-black/40 text-violet-300"
               />
               <span>
-                <span className="block text-sm font-semibold text-white">Bypass Codex outfit generation</span>
-                <span className="mt-1 block text-xs text-slate-400">Enable RunningHub try-on pipeline. Requires identity image and outfit image. Takes 90-120 seconds.</span>
+                <span className="block text-sm font-semibold text-white">Run Codex, then try-on</span>
+                <span className="mt-1 block text-xs text-slate-400">Generate with Codex first, then automatically run the RunningHub try-on pipeline. Requires identity image and outfit image.</span>
               </span>
             </label>
 
