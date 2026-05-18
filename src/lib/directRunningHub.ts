@@ -1,9 +1,23 @@
 import https from "node:https";
 import { updateGalleryItem } from "./galleryDb";
 
-const RUNNINGHUB_API_KEY = process.env.CODEX_API_KEY || "a33f38bd5c254560945f71578723f6b0";
-const UPSCALE_WORKFLOW_ID = "2056175041569673218";
-const UPSCALE_NODE_ID = 370;
+function getEnv(key: string): string | undefined {
+  const val = process.env[key];
+  if (!val) return undefined;
+  try {
+    const decoded = Buffer.from(val, "base64").toString("utf-8");
+    if (decoded.includes(":") || decoded.includes("/") || decoded.includes("https")) {
+      return decoded;
+    }
+  } catch {}
+  return val;
+}
+
+const RUNNINGHUB_API_KEY = getEnv("CODEX_API_KEY") || "a33f38bd5c254560945f71578723f6b0";
+const UPSCALE_WORKFLOW_ID = process.env.RUNNINGHUB_UPSCALE_WORKFLOW_ID || "2056175041569673218";
+const UPSCALE_NODE_ID = Number(process.env.RUNNINGHUB_UPSCALE_NODE_IMAGE) || 370;
+const UPSCALE_FIELD_NAME = process.env.RUNNINGHUB_UPSCALE_FIELD_IMAGE || "image";
+const IMGBB_API_KEY = getEnv("IMGBB_API_KEY");
 
 async function nativePost(url: string, payload: any): Promise<any> {
   console.log(`!!!LOG!!! [rh:post] ${url}`);
@@ -88,6 +102,54 @@ export async function uploadToRunningHub(fileBuffer: Buffer, fileName: string): 
   });
 }
 
+async function uploadToImgBB(imageBuffer: Buffer): Promise<{ url: string; deleteUrl?: string }> {
+  if (!IMGBB_API_KEY) {
+    throw new Error("IMGBB_API_KEY is not configured");
+  }
+
+  const base64Image = imageBuffer.toString("base64");
+
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify({
+      key: IMGBB_API_KEY,
+      image: base64Image,
+    });
+
+    const req = https.request(
+      "https://api.imgbb.com/1/upload",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(data),
+        },
+      },
+      (res) => {
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          try {
+            const result = JSON.parse(body);
+            if (!result.success) {
+              reject(new Error(result.error?.message || "ImgBB upload failed"));
+            } else {
+              resolve({
+                url: result.data.url,
+                deleteUrl: result.data.delete_url,
+              });
+            }
+          } catch (e) {
+            reject(new Error(`Failed to parse ImgBB response: ${body}`));
+          }
+        });
+      }
+    );
+    req.on("error", (e) => reject(e));
+    req.write(data);
+    req.end();
+  });
+}
+
 export async function pollRunningHubTask(galleryId: string, taskId: string) {
   const start = Date.now();
   const timeout = 10 * 60 * 1000; // 10 mins
@@ -109,15 +171,43 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
           taskId,
           apiKey: RUNNINGHUB_API_KEY,
         });
-        const url = outputs.data?.[0]?.fileUrl;
-        if (!url) throw new Error("No output URL found");
+        const rhUrl = outputs.data?.[0]?.fileUrl;
+        if (!rhUrl) throw new Error("No output URL found");
 
-        console.log(`!!!LOG!!! [rh:poll] ${taskId} success URL: ${url}`);
+        console.log(`!!!LOG!!! [rh:poll] ${taskId} success URL: ${rhUrl}`);
+
+        // Download from RunningHub and upload to ImgBB
+        await updateGalleryItem(galleryId, {
+          progress: 85,
+          message: "Uploading result to storage",
+        });
+
+        const imageResponse = await fetch(rhUrl);
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to download result: ${imageResponse.status}`);
+        }
+
+        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        const imgbbResult = await uploadToImgBB(imageBuffer);
+
+        console.log(`!!!LOG!!! [rh:poll] ${taskId} ImgBB URL: ${imgbbResult.url}`);
+
         await updateGalleryItem(galleryId, {
           status: "succeeded",
           progress: 100,
           message: "Upscale complete",
-          imageUrl: url,
+          imageUrl: imgbbResult.url,
+          metadata: {
+            imgbb: {
+              url: imgbbResult.url,
+              deleteUrl: imgbbResult.deleteUrl,
+            },
+            runninghub: {
+              taskId,
+              outputUrl: rhUrl,
+              workflowId: UPSCALE_WORKFLOW_ID,
+            },
+          },
         });
         return;
       }
@@ -130,6 +220,13 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
       });
     } catch (e: any) {
       console.error("!!!LOG!!! [poll] error", e);
+      await updateGalleryItem(galleryId, {
+        status: "failed",
+        progress: 100,
+        message: "Upscale failed",
+        error: e.message || "Unknown error",
+      });
+      return;
     }
   }
 
@@ -141,11 +238,11 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
 }
 
 export async function createDirectUpscaleTask(galleryId: string, rhFileName: string) {
-  console.log(`!!!LOG!!! [rh:create] starting for workflow ${UPSCALE_WORKFLOW_ID}`);
+  console.log(`!!!LOG!!! [rh:create] starting for workflow ${UPSCALE_WORKFLOW_ID}, node ${UPSCALE_NODE_ID}, field ${UPSCALE_FIELD_NAME}`);
   const res = await nativePost("https://www.runninghub.ai/task/openapi/create", {
     workflowId: UPSCALE_WORKFLOW_ID,
     apiKey: RUNNINGHUB_API_KEY,
-    nodeInfoList: [{ nodeId: UPSCALE_NODE_ID, fieldName: "image", fieldValue: rhFileName }],
+    nodeInfoList: [{ nodeId: UPSCALE_NODE_ID, fieldName: UPSCALE_FIELD_NAME, fieldValue: rhFileName }],
   });
 
   if (res.code !== 0) {
@@ -157,9 +254,9 @@ export async function createDirectUpscaleTask(galleryId: string, rhFileName: str
   console.log(`!!!LOG!!! [rh:create] success taskId: ${taskId}`);
   await updateGalleryItem(galleryId, {
     status: "processing",
-    progress: 20,
+    progress: 40,
     message: "AI task created",
-    metadata: { taskId },
+    metadata: { taskId, workflowId: UPSCALE_WORKFLOW_ID, nodeId: UPSCALE_NODE_ID },
   });
 
   void pollRunningHubTask(galleryId, taskId);
