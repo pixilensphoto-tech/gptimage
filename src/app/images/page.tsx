@@ -40,7 +40,8 @@ function formatDate(value: string) {
 }
 
 export default async function ImagesPage() {
-  const items = await listGalleryItems(120);
+  console.log("MARKER: RENDERING IMAGES PAGE V2");
+  const items = await getGalleryItems();
 
   return (
     <main className="min-h-screen bg-[#050816] text-white">

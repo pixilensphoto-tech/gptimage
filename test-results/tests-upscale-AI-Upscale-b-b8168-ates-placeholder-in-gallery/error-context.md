@@ -40,7 +40,7 @@ Error: Upscale failed: fetch failed
           - generic [ref=e16]:
             - generic [ref=e17]:
               - paragraph [ref=e19]: Upscale failed
-              - paragraph [ref=e20]: Placeholder created at May 18, 2026, 4:52 AM
+              - paragraph [ref=e20]: Placeholder created at May 18, 2026, 4:55 AM
             - generic [ref=e21]: failed
           - generic [ref=e22]:
             - generic [ref=e23]:
@@ -48,7 +48,7 @@ Error: Upscale failed: fetch failed
               - generic [ref=e25]: 100%
             - generic [ref=e26]:
               - paragraph [ref=e27]: Pyramid yoga pose
-              - paragraph [ref=e28]: May 18, 2026, 4:52 AM
+              - paragraph [ref=e28]: May 18, 2026, 4:55 AM
             - paragraph [ref=e29]: "Aspect ratio: 9:16"
             - paragraph [ref=e30]: fetch failed
             - button "Delete" [ref=e34]
@@ -56,15 +56,15 @@ Error: Upscale failed: fetch failed
           - generic [ref=e36]:
             - generic [ref=e37]:
               - paragraph [ref=e39]: Upscale failed
-              - paragraph [ref=e40]: Placeholder created at May 18, 2026, 4:46 AM
+              - paragraph [ref=e40]: Placeholder created at May 18, 2026, 4:52 AM
             - generic [ref=e41]: failed
           - generic [ref=e42]:
             - generic [ref=e43]:
               - generic [ref=e44]: Upscale
               - generic [ref=e45]: 100%
             - generic [ref=e46]:
-              - paragraph [ref=e47]: Professional fashion editorial portrait
-              - paragraph [ref=e48]: May 18, 2026, 4:46 AM
+              - paragraph [ref=e47]: Pyramid yoga pose
+              - paragraph [ref=e48]: May 18, 2026, 4:52 AM
             - paragraph [ref=e49]: "Aspect ratio: 9:16"
             - paragraph [ref=e50]: fetch failed
             - button "Delete" [ref=e54]
@@ -79,7 +79,7 @@ Error: Upscale failed: fetch failed
               - generic [ref=e64]: Upscale
               - generic [ref=e65]: 100%
             - generic [ref=e66]:
-              - paragraph [ref=e67]: Pyramid yoga pose
+              - paragraph [ref=e67]: Professional fashion editorial portrait
               - paragraph [ref=e68]: May 18, 2026, 4:46 AM
             - paragraph [ref=e69]: "Aspect ratio: 9:16"
             - paragraph [ref=e70]: fetch failed
@@ -102,75 +102,75 @@ Error: Upscale failed: fetch failed
             - button "Delete" [ref=e94]
         - article [ref=e95]:
           - generic [ref=e96]:
-            - link "Pyramid yoga pose" [ref=e97] [cursor=pointer]:
+            - generic [ref=e97]:
+              - paragraph [ref=e99]: Upscale failed
+              - paragraph [ref=e100]: Placeholder created at May 18, 2026, 4:46 AM
+            - generic [ref=e101]: failed
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - generic [ref=e104]: Upscale
+              - generic [ref=e105]: 100%
+            - generic [ref=e106]:
+              - paragraph [ref=e107]: Pyramid yoga pose
+              - paragraph [ref=e108]: May 18, 2026, 4:46 AM
+            - paragraph [ref=e109]: "Aspect ratio: 9:16"
+            - paragraph [ref=e110]: fetch failed
+            - button "Delete" [ref=e114]
+        - article [ref=e115]:
+          - generic [ref=e116]:
+            - link "Pyramid yoga pose" [ref=e117] [cursor=pointer]:
               - /url: https://i.ibb.co/3yBWkMs6/upscale-d57aa877-a03c-4cc3-b013-007552b64676.png
-              - img "Pyramid yoga pose" [ref=e98]
-            - generic [ref=e99]: succeeded
-          - generic [ref=e100]:
-            - generic [ref=e101]:
-              - generic [ref=e102]: Upscale
-              - generic [ref=e103]: 100%
-            - generic [ref=e104]:
-              - paragraph [ref=e105]: Pyramid yoga pose
-              - paragraph [ref=e106]: May 18, 2026, 4:42 AM
-            - paragraph [ref=e107]: "Aspect ratio: 9:16"
-            - generic [ref=e110]:
-              - link "Open image" [ref=e111] [cursor=pointer]:
+              - img "Pyramid yoga pose" [ref=e118]
+            - generic [ref=e119]: succeeded
+          - generic [ref=e120]:
+            - generic [ref=e121]:
+              - generic [ref=e122]: Upscale
+              - generic [ref=e123]: 100%
+            - generic [ref=e124]:
+              - paragraph [ref=e125]: Pyramid yoga pose
+              - paragraph [ref=e126]: May 18, 2026, 4:42 AM
+            - paragraph [ref=e127]: "Aspect ratio: 9:16"
+            - generic [ref=e130]:
+              - link "Open image" [ref=e131] [cursor=pointer]:
                 - /url: https://i.ibb.co/3yBWkMs6/upscale-d57aa877-a03c-4cc3-b013-007552b64676.png
-              - link "Download" [ref=e112] [cursor=pointer]:
+              - link "Download" [ref=e132] [cursor=pointer]:
                 - /url: https://i.ibb.co/3yBWkMs6/upscale-d57aa877-a03c-4cc3-b013-007552b64676.png
-              - button "Queueing..." [disabled] [ref=e114]
-              - button "Delete" [ref=e116]
-        - article [ref=e117]:
-          - generic [ref=e118]:
-            - link "Upscale result" [ref=e119] [cursor=pointer]:
+              - button "Queueing..." [disabled] [ref=e134]
+              - button "Delete" [ref=e136]
+        - article [ref=e137]:
+          - generic [ref=e138]:
+            - link "Upscale result" [ref=e139] [cursor=pointer]:
               - /url: https://i.ibb.co/n8BKPYG6/upscale-3bc68c32-e5de-4a22-ba2e-d1a3dc380dfc.png
-              - img "Upscale result" [ref=e120]
-            - generic [ref=e121]: succeeded
-          - generic [ref=e122]:
-            - generic [ref=e123]:
-              - generic [ref=e124]: Upscale
-              - generic [ref=e125]: 100%
-            - generic [ref=e126]:
-              - paragraph [ref=e127]: Upscaled image ready
-              - paragraph [ref=e128]: May 18, 2026, 4:42 AM
-            - paragraph [ref=e129]: "Aspect ratio: 9:16"
-            - generic [ref=e132]:
-              - link "Open image" [ref=e133] [cursor=pointer]:
+              - img "Upscale result" [ref=e140]
+            - generic [ref=e141]: succeeded
+          - generic [ref=e142]:
+            - generic [ref=e143]:
+              - generic [ref=e144]: Upscale
+              - generic [ref=e145]: 100%
+            - generic [ref=e146]:
+              - paragraph [ref=e147]: Upscaled image ready
+              - paragraph [ref=e148]: May 18, 2026, 4:42 AM
+            - paragraph [ref=e149]: "Aspect ratio: 9:16"
+            - generic [ref=e152]:
+              - link "Open image" [ref=e153] [cursor=pointer]:
                 - /url: https://i.ibb.co/n8BKPYG6/upscale-3bc68c32-e5de-4a22-ba2e-d1a3dc380dfc.png
-              - link "Download" [ref=e134] [cursor=pointer]:
+              - link "Download" [ref=e154] [cursor=pointer]:
                 - /url: https://i.ibb.co/n8BKPYG6/upscale-3bc68c32-e5de-4a22-ba2e-d1a3dc380dfc.png
-              - button "AI Upscale" [ref=e136]
-              - button "Delete" [ref=e138]
-        - article [ref=e139]:
-          - generic [ref=e140]:
-            - generic [ref=e141]:
-              - paragraph [ref=e143]: Upscale failed
-              - paragraph [ref=e144]: Placeholder created at May 18, 2026, 4:26 AM
-            - generic [ref=e145]: failed
-          - generic [ref=e146]:
-            - generic [ref=e147]:
-              - generic [ref=e148]: Upscale
-              - generic [ref=e149]: 100%
-            - generic [ref=e150]:
-              - paragraph [ref=e151]: Pyramid yoga pose
-              - paragraph [ref=e152]: May 18, 2026, 4:26 AM
-            - paragraph [ref=e153]: "Aspect ratio: 9:16"
-            - paragraph [ref=e154]: fetch failed
-            - button "Delete" [ref=e158]
+              - button "AI Upscale" [ref=e156]
+              - button "Delete" [ref=e158]
         - article [ref=e159]:
           - generic [ref=e160]:
             - generic [ref=e161]:
               - paragraph [ref=e163]: Upscale failed
-              - paragraph [ref=e164]: Placeholder created at May 18, 2026, 4:23 AM
+              - paragraph [ref=e164]: Placeholder created at May 18, 2026, 4:26 AM
             - generic [ref=e165]: failed
           - generic [ref=e166]:
             - generic [ref=e167]:
               - generic [ref=e168]: Upscale
               - generic [ref=e169]: 100%
             - generic [ref=e170]:
-              - paragraph [ref=e171]: Upscale failed
-              - paragraph [ref=e172]: May 18, 2026, 4:23 AM
+              - paragraph [ref=e171]: Pyramid yoga pose
+              - paragraph [ref=e172]: May 18, 2026, 4:26 AM
             - paragraph [ref=e173]: "Aspect ratio: 9:16"
             - paragraph [ref=e174]: fetch failed
             - button "Delete" [ref=e178]
@@ -178,15 +178,15 @@ Error: Upscale failed: fetch failed
           - generic [ref=e180]:
             - generic [ref=e181]:
               - paragraph [ref=e183]: Upscale failed
-              - paragraph [ref=e184]: Placeholder created at May 18, 2026, 4:21 AM
+              - paragraph [ref=e184]: Placeholder created at May 18, 2026, 4:23 AM
             - generic [ref=e185]: failed
           - generic [ref=e186]:
             - generic [ref=e187]:
               - generic [ref=e188]: Upscale
               - generic [ref=e189]: 100%
             - generic [ref=e190]:
-              - paragraph [ref=e191]: Pyramid yoga pose
-              - paragraph [ref=e192]: May 18, 2026, 4:21 AM
+              - paragraph [ref=e191]: Upscale failed
+              - paragraph [ref=e192]: May 18, 2026, 4:23 AM
             - paragraph [ref=e193]: "Aspect ratio: 9:16"
             - paragraph [ref=e194]: fetch failed
             - button "Delete" [ref=e198]
@@ -194,15 +194,15 @@ Error: Upscale failed: fetch failed
           - generic [ref=e200]:
             - generic [ref=e201]:
               - paragraph [ref=e203]: Upscale failed
-              - paragraph [ref=e204]: Placeholder created at May 18, 2026, 4:18 AM
+              - paragraph [ref=e204]: Placeholder created at May 18, 2026, 4:21 AM
             - generic [ref=e205]: failed
           - generic [ref=e206]:
             - generic [ref=e207]:
               - generic [ref=e208]: Upscale
               - generic [ref=e209]: 100%
             - generic [ref=e210]:
-              - paragraph [ref=e211]: Upscale failed
-              - paragraph [ref=e212]: May 18, 2026, 4:18 AM
+              - paragraph [ref=e211]: Pyramid yoga pose
+              - paragraph [ref=e212]: May 18, 2026, 4:21 AM
             - paragraph [ref=e213]: "Aspect ratio: 9:16"
             - paragraph [ref=e214]: fetch failed
             - button "Delete" [ref=e218]
@@ -210,7 +210,7 @@ Error: Upscale failed: fetch failed
           - generic [ref=e220]:
             - generic [ref=e221]:
               - paragraph [ref=e223]: Upscale failed
-              - paragraph [ref=e224]: Placeholder created at May 18, 2026, 4:17 AM
+              - paragraph [ref=e224]: Placeholder created at May 18, 2026, 4:18 AM
             - generic [ref=e225]: failed
           - generic [ref=e226]:
             - generic [ref=e227]:
@@ -224,201 +224,217 @@ Error: Upscale failed: fetch failed
             - button "Delete" [ref=e238]
         - article [ref=e239]:
           - generic [ref=e240]:
-            - link "Codex Then Tryon result" [ref=e241] [cursor=pointer]:
+            - generic [ref=e241]:
+              - paragraph [ref=e243]: Upscale failed
+              - paragraph [ref=e244]: Placeholder created at May 18, 2026, 4:17 AM
+            - generic [ref=e245]: failed
+          - generic [ref=e246]:
+            - generic [ref=e247]:
+              - generic [ref=e248]: Upscale
+              - generic [ref=e249]: 100%
+            - generic [ref=e250]:
+              - paragraph [ref=e251]: Upscale failed
+              - paragraph [ref=e252]: May 18, 2026, 4:18 AM
+            - paragraph [ref=e253]: "Aspect ratio: 9:16"
+            - paragraph [ref=e254]: fetch failed
+            - button "Delete" [ref=e258]
+        - article [ref=e259]:
+          - generic [ref=e260]:
+            - link "Codex Then Tryon result" [ref=e261] [cursor=pointer]:
               - /url: https://i.ibb.co/R4sSkHxJ/codex-codex-image.png
-              - img "Codex Then Tryon result" [ref=e242]
-            - generic [ref=e243]: failed
-          - generic [ref=e244]:
-            - generic [ref=e245]:
-              - generic [ref=e246]: Codex Then Tryon
-              - generic [ref=e247]: 100%
-            - generic [ref=e248]:
-              - paragraph [ref=e249]: Codex or try-on failed
-              - paragraph [ref=e250]: May 18, 2026, 2:57 AM
-            - paragraph [ref=e251]: "Aspect ratio: 9:16"
-            - paragraph [ref=e252]: identityImages[0] must include base64, dataUrl, or path
-            - generic [ref=e255]:
-              - link "Open image" [ref=e256] [cursor=pointer]:
-                - /url: https://i.ibb.co/R4sSkHxJ/codex-codex-image.png
-              - link "Download" [ref=e257] [cursor=pointer]:
-                - /url: https://i.ibb.co/R4sSkHxJ/codex-codex-image.png
-              - button "AI Upscale" [ref=e259]
-              - button "Delete" [ref=e261]
-        - article [ref=e262]:
-          - generic [ref=e263]:
-            - link "Codex Then Tryon result" [ref=e264] [cursor=pointer]:
-              - /url: https://i.ibb.co/XnNxNHx/codex-codex-image.png
-              - img "Codex Then Tryon result" [ref=e265]
-            - generic [ref=e266]: failed
-          - generic [ref=e267]:
+              - img "Codex Then Tryon result" [ref=e262]
+            - generic [ref=e263]: failed
+          - generic [ref=e264]:
+            - generic [ref=e265]:
+              - generic [ref=e266]: Codex Then Tryon
+              - generic [ref=e267]: 100%
             - generic [ref=e268]:
-              - generic [ref=e269]: Codex Then Tryon
-              - generic [ref=e270]: 100%
-            - generic [ref=e271]:
-              - paragraph [ref=e272]: Codex or try-on failed
-              - paragraph [ref=e273]: May 18, 2026, 2:50 AM
-            - paragraph [ref=e274]: "Aspect ratio: 9:16"
-            - paragraph [ref=e275]: identityImages[0] must include base64, dataUrl, or path
-            - generic [ref=e278]:
-              - link "Open image" [ref=e279] [cursor=pointer]:
-                - /url: https://i.ibb.co/XnNxNHx/codex-codex-image.png
-              - link "Download" [ref=e280] [cursor=pointer]:
-                - /url: https://i.ibb.co/XnNxNHx/codex-codex-image.png
-              - button "AI Upscale" [ref=e282]
-              - button "Delete" [ref=e284]
-        - article [ref=e285]:
-          - generic [ref=e286]:
-            - link "same woman doing pyramid pose, hands back" [ref=e287] [cursor=pointer]:
-              - /url: https://i.ibb.co/60Zx6fyW/codex-codex-image.png
-              - img "same woman doing pyramid pose, hands back" [ref=e288]
-            - generic [ref=e289]: failed
-          - generic [ref=e290]:
+              - paragraph [ref=e269]: Codex or try-on failed
+              - paragraph [ref=e270]: May 18, 2026, 2:57 AM
+            - paragraph [ref=e271]: "Aspect ratio: 9:16"
+            - paragraph [ref=e272]: identityImages[0] must include base64, dataUrl, or path
+            - generic [ref=e275]:
+              - link "Open image" [ref=e276] [cursor=pointer]:
+                - /url: https://i.ibb.co/R4sSkHxJ/codex-codex-image.png
+              - link "Download" [ref=e277] [cursor=pointer]:
+                - /url: https://i.ibb.co/R4sSkHxJ/codex-codex-image.png
+              - button "AI Upscale" [ref=e279]
+              - button "Delete" [ref=e281]
+        - article [ref=e282]:
+          - generic [ref=e283]:
+            - link "Codex Then Tryon result" [ref=e284] [cursor=pointer]:
+              - /url: https://i.ibb.co/XnNxNHx/codex-codex-image.png
+              - img "Codex Then Tryon result" [ref=e285]
+            - generic [ref=e286]: failed
+          - generic [ref=e287]:
+            - generic [ref=e288]:
+              - generic [ref=e289]: Codex Then Tryon
+              - generic [ref=e290]: 100%
             - generic [ref=e291]:
-              - generic [ref=e292]: Codex Then Tryon
-              - generic [ref=e293]: 100%
-            - generic [ref=e294]:
-              - paragraph [ref=e295]: same woman doing pyramid pose, hands back
-              - paragraph [ref=e296]: May 18, 2026, 2:47 AM
-            - paragraph [ref=e297]: "Aspect ratio: 16:9"
-            - paragraph [ref=e298]: identityImages[0] must include base64, dataUrl, or path
-            - generic [ref=e301]:
-              - link "Open image" [ref=e302] [cursor=pointer]:
-                - /url: https://i.ibb.co/60Zx6fyW/codex-codex-image.png
-              - link "Download" [ref=e303] [cursor=pointer]:
-                - /url: https://i.ibb.co/60Zx6fyW/codex-codex-image.png
-              - button "AI Upscale" [ref=e305]
-              - button "Delete" [ref=e307]
-        - article [ref=e308]:
-          - generic [ref=e309]:
-            - link "Codex Then Tryon result" [ref=e310] [cursor=pointer]:
-              - /url: https://i.ibb.co/v4bZkN1T/codex-codex-image.png
-              - img "Codex Then Tryon result" [ref=e311]
-            - generic [ref=e312]: failed
-          - generic [ref=e313]:
+              - paragraph [ref=e292]: Codex or try-on failed
+              - paragraph [ref=e293]: May 18, 2026, 2:50 AM
+            - paragraph [ref=e294]: "Aspect ratio: 9:16"
+            - paragraph [ref=e295]: identityImages[0] must include base64, dataUrl, or path
+            - generic [ref=e298]:
+              - link "Open image" [ref=e299] [cursor=pointer]:
+                - /url: https://i.ibb.co/XnNxNHx/codex-codex-image.png
+              - link "Download" [ref=e300] [cursor=pointer]:
+                - /url: https://i.ibb.co/XnNxNHx/codex-codex-image.png
+              - button "AI Upscale" [ref=e302]
+              - button "Delete" [ref=e304]
+        - article [ref=e305]:
+          - generic [ref=e306]:
+            - link "same woman doing pyramid pose, hands back" [ref=e307] [cursor=pointer]:
+              - /url: https://i.ibb.co/60Zx6fyW/codex-codex-image.png
+              - img "same woman doing pyramid pose, hands back" [ref=e308]
+            - generic [ref=e309]: failed
+          - generic [ref=e310]:
+            - generic [ref=e311]:
+              - generic [ref=e312]: Codex Then Tryon
+              - generic [ref=e313]: 100%
             - generic [ref=e314]:
-              - generic [ref=e315]: Codex Then Tryon
-              - generic [ref=e316]: 100%
-            - generic [ref=e317]:
-              - paragraph [ref=e318]: Codex or try-on failed
-              - paragraph [ref=e319]: May 18, 2026, 2:01 AM
-            - paragraph [ref=e320]: "Aspect ratio: 16:9"
-            - paragraph [ref=e321]: identityImages[0] must include base64, dataUrl, or path
-            - generic [ref=e324]:
-              - link "Open image" [ref=e325] [cursor=pointer]:
-                - /url: https://i.ibb.co/v4bZkN1T/codex-codex-image.png
-              - link "Download" [ref=e326] [cursor=pointer]:
-                - /url: https://i.ibb.co/v4bZkN1T/codex-codex-image.png
-              - button "AI Upscale" [ref=e328]
-              - button "Delete" [ref=e330]
-        - article [ref=e331]:
-          - generic [ref=e332]:
-            - link "Codex Then Tryon result" [ref=e333] [cursor=pointer]:
-              - /url: https://i.ibb.co/9MZp6Fd/codex-codex-image.png
-              - img "Codex Then Tryon result" [ref=e334]
-            - generic [ref=e335]: failed
-          - generic [ref=e336]:
+              - paragraph [ref=e315]: same woman doing pyramid pose, hands back
+              - paragraph [ref=e316]: May 18, 2026, 2:47 AM
+            - paragraph [ref=e317]: "Aspect ratio: 16:9"
+            - paragraph [ref=e318]: identityImages[0] must include base64, dataUrl, or path
+            - generic [ref=e321]:
+              - link "Open image" [ref=e322] [cursor=pointer]:
+                - /url: https://i.ibb.co/60Zx6fyW/codex-codex-image.png
+              - link "Download" [ref=e323] [cursor=pointer]:
+                - /url: https://i.ibb.co/60Zx6fyW/codex-codex-image.png
+              - button "AI Upscale" [ref=e325]
+              - button "Delete" [ref=e327]
+        - article [ref=e328]:
+          - generic [ref=e329]:
+            - link "Codex Then Tryon result" [ref=e330] [cursor=pointer]:
+              - /url: https://i.ibb.co/v4bZkN1T/codex-codex-image.png
+              - img "Codex Then Tryon result" [ref=e331]
+            - generic [ref=e332]: failed
+          - generic [ref=e333]:
+            - generic [ref=e334]:
+              - generic [ref=e335]: Codex Then Tryon
+              - generic [ref=e336]: 100%
             - generic [ref=e337]:
-              - generic [ref=e338]: Codex Then Tryon
-              - generic [ref=e339]: 100%
-            - generic [ref=e340]:
-              - paragraph [ref=e341]: Codex or try-on failed
-              - paragraph [ref=e342]: May 18, 2026, 1:46 AM
-            - paragraph [ref=e343]: "Aspect ratio: 9:16"
-            - paragraph [ref=e344]: identityImages[0] must include base64, dataUrl, or path
-            - generic [ref=e347]:
-              - link "Open image" [ref=e348] [cursor=pointer]:
-                - /url: https://i.ibb.co/9MZp6Fd/codex-codex-image.png
-              - link "Download" [ref=e349] [cursor=pointer]:
-                - /url: https://i.ibb.co/9MZp6Fd/codex-codex-image.png
-              - button "AI Upscale" [ref=e351]
-              - button "Delete" [ref=e353]
-        - article [ref=e354]:
-          - generic [ref=e355]:
-            - link "Codex Then Tryon result" [ref=e356] [cursor=pointer]:
-              - /url: https://i.ibb.co/23RSJQM8/codex-codex-image.png
-              - img "Codex Then Tryon result" [ref=e357]
-            - generic [ref=e358]: failed
-          - generic [ref=e359]:
+              - paragraph [ref=e338]: Codex or try-on failed
+              - paragraph [ref=e339]: May 18, 2026, 2:01 AM
+            - paragraph [ref=e340]: "Aspect ratio: 16:9"
+            - paragraph [ref=e341]: identityImages[0] must include base64, dataUrl, or path
+            - generic [ref=e344]:
+              - link "Open image" [ref=e345] [cursor=pointer]:
+                - /url: https://i.ibb.co/v4bZkN1T/codex-codex-image.png
+              - link "Download" [ref=e346] [cursor=pointer]:
+                - /url: https://i.ibb.co/v4bZkN1T/codex-codex-image.png
+              - button "AI Upscale" [ref=e348]
+              - button "Delete" [ref=e350]
+        - article [ref=e351]:
+          - generic [ref=e352]:
+            - link "Codex Then Tryon result" [ref=e353] [cursor=pointer]:
+              - /url: https://i.ibb.co/9MZp6Fd/codex-codex-image.png
+              - img "Codex Then Tryon result" [ref=e354]
+            - generic [ref=e355]: failed
+          - generic [ref=e356]:
+            - generic [ref=e357]:
+              - generic [ref=e358]: Codex Then Tryon
+              - generic [ref=e359]: 100%
             - generic [ref=e360]:
-              - generic [ref=e361]: Codex Then Tryon
-              - generic [ref=e362]: 100%
-            - generic [ref=e363]:
-              - paragraph [ref=e364]: Codex or try-on failed
-              - paragraph [ref=e365]: May 18, 2026, 12:35 AM
-            - paragraph [ref=e366]: "Aspect ratio: 9:16"
-            - paragraph [ref=e367]: identityImages[0] must include base64, dataUrl, or path
-            - generic [ref=e370]:
-              - link "Open image" [ref=e371] [cursor=pointer]:
-                - /url: https://i.ibb.co/23RSJQM8/codex-codex-image.png
-              - link "Download" [ref=e372] [cursor=pointer]:
-                - /url: https://i.ibb.co/23RSJQM8/codex-codex-image.png
-              - button "AI Upscale" [ref=e374]
-              - button "Delete" [ref=e376]
-        - article [ref=e377]:
-          - generic [ref=e378]:
-            - link "woman doing pyramid pose looking downwards" [ref=e379] [cursor=pointer]:
-              - /url: https://i.ibb.co/sT6sp73/codex-codex-image.png
-              - img "woman doing pyramid pose looking downwards" [ref=e380]
-            - generic [ref=e381]: failed
-          - generic [ref=e382]:
+              - paragraph [ref=e361]: Codex or try-on failed
+              - paragraph [ref=e362]: May 18, 2026, 1:46 AM
+            - paragraph [ref=e363]: "Aspect ratio: 9:16"
+            - paragraph [ref=e364]: identityImages[0] must include base64, dataUrl, or path
+            - generic [ref=e367]:
+              - link "Open image" [ref=e368] [cursor=pointer]:
+                - /url: https://i.ibb.co/9MZp6Fd/codex-codex-image.png
+              - link "Download" [ref=e369] [cursor=pointer]:
+                - /url: https://i.ibb.co/9MZp6Fd/codex-codex-image.png
+              - button "AI Upscale" [ref=e371]
+              - button "Delete" [ref=e373]
+        - article [ref=e374]:
+          - generic [ref=e375]:
+            - link "Codex Then Tryon result" [ref=e376] [cursor=pointer]:
+              - /url: https://i.ibb.co/23RSJQM8/codex-codex-image.png
+              - img "Codex Then Tryon result" [ref=e377]
+            - generic [ref=e378]: failed
+          - generic [ref=e379]:
+            - generic [ref=e380]:
+              - generic [ref=e381]: Codex Then Tryon
+              - generic [ref=e382]: 100%
             - generic [ref=e383]:
-              - generic [ref=e384]: Codex Then Tryon
-              - generic [ref=e385]: 100%
-            - generic [ref=e386]:
-              - paragraph [ref=e387]: woman doing pyramid pose looking downwards
-              - paragraph [ref=e388]: May 18, 2026, 12:21 AM
-            - paragraph [ref=e389]: "Aspect ratio: 9:16"
-            - paragraph [ref=e390]: identityImages[0] must include base64, dataUrl, or path
-            - generic [ref=e393]:
-              - link "Open image" [ref=e394] [cursor=pointer]:
-                - /url: https://i.ibb.co/sT6sp73/codex-codex-image.png
-              - link "Download" [ref=e395] [cursor=pointer]:
-                - /url: https://i.ibb.co/sT6sp73/codex-codex-image.png
-              - button "AI Upscale" [ref=e397]
-              - button "Delete" [ref=e399]
-        - article [ref=e400]:
-          - generic [ref=e401]:
-            - link "Pyramid yoga pose" [ref=e402] [cursor=pointer]:
-              - /url: https://i.ibb.co/MkLP52TL/codex-codex-image.png
-              - img "Pyramid yoga pose" [ref=e403]
-            - generic [ref=e404]: succeeded
-          - generic [ref=e405]:
+              - paragraph [ref=e384]: Codex or try-on failed
+              - paragraph [ref=e385]: May 18, 2026, 12:35 AM
+            - paragraph [ref=e386]: "Aspect ratio: 9:16"
+            - paragraph [ref=e387]: identityImages[0] must include base64, dataUrl, or path
+            - generic [ref=e390]:
+              - link "Open image" [ref=e391] [cursor=pointer]:
+                - /url: https://i.ibb.co/23RSJQM8/codex-codex-image.png
+              - link "Download" [ref=e392] [cursor=pointer]:
+                - /url: https://i.ibb.co/23RSJQM8/codex-codex-image.png
+              - button "AI Upscale" [ref=e394]
+              - button "Delete" [ref=e396]
+        - article [ref=e397]:
+          - generic [ref=e398]:
+            - link "woman doing pyramid pose looking downwards" [ref=e399] [cursor=pointer]:
+              - /url: https://i.ibb.co/sT6sp73/codex-codex-image.png
+              - img "woman doing pyramid pose looking downwards" [ref=e400]
+            - generic [ref=e401]: failed
+          - generic [ref=e402]:
+            - generic [ref=e403]:
+              - generic [ref=e404]: Codex Then Tryon
+              - generic [ref=e405]: 100%
             - generic [ref=e406]:
-              - generic [ref=e407]: Codex
-              - generic [ref=e408]: 100%
-            - generic [ref=e409]:
-              - paragraph [ref=e410]: Pyramid yoga pose
-              - paragraph [ref=e411]: May 17, 2026, 10:45 PM
-            - paragraph [ref=e412]: "Aspect ratio: 9:16"
-            - generic [ref=e415]:
-              - link "Open image" [ref=e416] [cursor=pointer]:
+              - paragraph [ref=e407]: woman doing pyramid pose looking downwards
+              - paragraph [ref=e408]: May 18, 2026, 12:21 AM
+            - paragraph [ref=e409]: "Aspect ratio: 9:16"
+            - paragraph [ref=e410]: identityImages[0] must include base64, dataUrl, or path
+            - generic [ref=e413]:
+              - link "Open image" [ref=e414] [cursor=pointer]:
+                - /url: https://i.ibb.co/sT6sp73/codex-codex-image.png
+              - link "Download" [ref=e415] [cursor=pointer]:
+                - /url: https://i.ibb.co/sT6sp73/codex-codex-image.png
+              - button "AI Upscale" [ref=e417]
+              - button "Delete" [ref=e419]
+        - article [ref=e420]:
+          - generic [ref=e421]:
+            - link "Pyramid yoga pose" [ref=e422] [cursor=pointer]:
+              - /url: https://i.ibb.co/MkLP52TL/codex-codex-image.png
+              - img "Pyramid yoga pose" [ref=e423]
+            - generic [ref=e424]: succeeded
+          - generic [ref=e425]:
+            - generic [ref=e426]:
+              - generic [ref=e427]: Codex
+              - generic [ref=e428]: 100%
+            - generic [ref=e429]:
+              - paragraph [ref=e430]: Pyramid yoga pose
+              - paragraph [ref=e431]: May 17, 2026, 10:45 PM
+            - paragraph [ref=e432]: "Aspect ratio: 9:16"
+            - generic [ref=e435]:
+              - link "Open image" [ref=e436] [cursor=pointer]:
                 - /url: https://i.ibb.co/MkLP52TL/codex-codex-image.png
-              - link "Download" [ref=e417] [cursor=pointer]:
+              - link "Download" [ref=e437] [cursor=pointer]:
                 - /url: https://i.ibb.co/MkLP52TL/codex-codex-image.png
-              - button "AI Upscale" [ref=e419]
-              - button "Delete" [ref=e421]
-        - article [ref=e422]:
-          - generic [ref=e423]:
-            - link "Professional fashion editorial portrait" [ref=e424] [cursor=pointer]:
+              - button "AI Upscale" [ref=e439]
+              - button "Delete" [ref=e441]
+        - article [ref=e442]:
+          - generic [ref=e443]:
+            - link "Professional fashion editorial portrait" [ref=e444] [cursor=pointer]:
               - /url: https://i.ibb.co/8gsjtDr0/codex-image.png
-              - img "Professional fashion editorial portrait" [ref=e425]
-            - generic [ref=e426]: succeeded
-          - generic [ref=e427]:
-            - generic [ref=e428]:
-              - generic [ref=e429]: Codex
-              - generic [ref=e430]: 100%
-            - generic [ref=e431]:
-              - paragraph [ref=e432]: Professional fashion editorial portrait
-              - paragraph [ref=e433]: May 17, 2026, 6:27 PM
-            - paragraph [ref=e434]: "Aspect ratio: 9:16"
-            - generic [ref=e437]:
-              - link "Open image" [ref=e438] [cursor=pointer]:
+              - img "Professional fashion editorial portrait" [ref=e445]
+            - generic [ref=e446]: succeeded
+          - generic [ref=e447]:
+            - generic [ref=e448]:
+              - generic [ref=e449]: Codex
+              - generic [ref=e450]: 100%
+            - generic [ref=e451]:
+              - paragraph [ref=e452]: Professional fashion editorial portrait
+              - paragraph [ref=e453]: May 17, 2026, 6:27 PM
+            - paragraph [ref=e454]: "Aspect ratio: 9:16"
+            - generic [ref=e457]:
+              - link "Open image" [ref=e458] [cursor=pointer]:
                 - /url: https://i.ibb.co/8gsjtDr0/codex-image.png
-              - link "Download" [ref=e439] [cursor=pointer]:
+              - link "Download" [ref=e459] [cursor=pointer]:
                 - /url: https://i.ibb.co/8gsjtDr0/codex-image.png
-              - button "AI Upscale" [ref=e441]
-              - button "Delete" [ref=e443]
-  - alert [ref=e444]
+              - button "AI Upscale" [ref=e461]
+              - button "Delete" [ref=e463]
+  - alert [ref=e464]
 ```
 
 # Test source
