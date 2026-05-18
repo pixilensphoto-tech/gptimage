@@ -6,41 +6,34 @@ const UPSCALE_STATUS_TIMEOUT_MS = 8 * 60 * 1000;
 type ImgBbResult = {
   url: string;
   viewerUrl?: string;
-  displayUrl?: string;
-  deleteUrl?: string;
+  displayUrl: string;
+  deleteUrl: string;
 };
 
 type RunningHubResult = {
   taskId: string;
-  outputUrl?: string;
+  outputUrl: string;
   workflowId: string;
 };
 
-type AsyncUpscaleJob = {
-  id: string;
-  status: "pending" | "processing" | "succeeded" | "failed";
-  progress: number;
-  message: string;
-  createdAt?: string;
-  updatedAt?: string;
-  runninghub?: RunningHubResult | null;
-  imgbb?: ImgBbResult | null;
-  error?: string | null;
+type UpscaleResult = {
+  ok: boolean;
+  imgbb: ImgBbResult;
+  runninghub: RunningHubResult;
 };
 
 type AsyncUpscaleResponse = {
-  ok?: boolean;
-  pipeline?: "runninghub";
-  async?: boolean;
-  statusUrl?: string;
-  job?: AsyncUpscaleJob;
-  error?: string;
-};
-
-type UpscaleResult = {
-  pipeline: "runninghub";
-  runninghub?: RunningHubResult;
-  imgbb?: ImgBbResult;
+  ok: boolean;
+  async: true;
+  statusUrl: string;
+  job: {
+    id: string;
+    status: "pending" | "processing" | "succeeded" | "failed";
+    progress: number;
+    message: string;
+    outputUrl?: string;
+    error?: string | null;
+  };
 };
 
 function getEnv(key: string): string | undefined {
@@ -48,85 +41,68 @@ function getEnv(key: string): string | undefined {
   if (!val) return undefined;
   try {
     const decoded = Buffer.from(val, "base64").toString("utf-8");
-    const ratio = decoded.length / val.length;
-    const validLength = ratio > 0.5 && ratio < 1.0;
-    const validUtf8 = !decoded.includes("�");
-    if (validUtf8 && validLength && decoded !== val) return decoded;
+    if (decoded.includes(":") || decoded.includes("/") || decoded.includes("https")) {
+      return decoded;
+    }
   } catch {}
   return val;
 }
 
-function resolveStatusUrl(apiUrl: string, statusUrl: string) {
-  if (statusUrl.startsWith("http://") || statusUrl.startsWith("https://")) {
-    return statusUrl;
-  }
+async function applyUpscaleStatus(
+  id: string,
+  job: AsyncUpscaleResponse["job"],
+  metadata?: any
+) {
+  const isFinished = job.status === "succeeded" || job.status === "failed";
 
-  if (statusUrl.startsWith("/")) {
-    return `${apiUrl}${statusUrl}`;
-  }
-
-  return `${apiUrl}/${statusUrl}`;
-}
-
-async function applyUpscaleStatus(id: string, job: AsyncUpscaleJob, metadata: Record<string, unknown>) {
   await updateGalleryItem(id, {
     status: job.status,
     progress: job.progress,
     message: job.message,
-    imageUrl: job.imgbb?.url ?? job.runninghub?.outputUrl,
-    error: job.error ?? undefined,
-    metadata,
+    imageUrl: job.outputUrl || undefined,
+    error: job.error || undefined,
+    metadata: metadata
+      ? { ...(metadata || {}), upstream: { job } }
+      : { upstream: { job } },
   });
+
+  return isFinished;
 }
 
-async function pollUpscaleStatus(id: string, apiUrl: string, apiKey: string, statusUrl: string, initialJob?: AsyncUpscaleJob) {
-  const startedAt = Date.now();
-  const resolvedStatusUrl = resolveStatusUrl(apiUrl, statusUrl);
+async function pollUpscaleStatus(
+  id: string,
+  apiUrl: string,
+  apiKey: string,
+  statusUrl: string,
+  initialJob: AsyncUpscaleResponse["job"]
+) {
+  const startTime = Date.now();
   let latestJob = initialJob;
+  const resolvedStatusUrl = statusUrl.startsWith("http")
+    ? statusUrl
+    : `${apiUrl}${statusUrl}`;
 
-  if (latestJob) {
-    await applyUpscaleStatus(id, latestJob, {
-      upstream: {
-        async: true,
-        statusUrl: resolvedStatusUrl,
-        job: latestJob,
-      },
-    });
-  }
+  while (Date.now() - startTime < UPSCALE_STATUS_TIMEOUT_MS) {
+    const isFinished = await applyUpscaleStatus(id, latestJob);
+    if (isFinished) return;
 
-  while (Date.now() - startedAt < UPSCALE_STATUS_TIMEOUT_MS) {
-    if (latestJob?.status === "succeeded" || latestJob?.status === "failed") {
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, UPSCALE_STATUS_POLL_MS));
+    await new Promise((r) => setTimeout(r, UPSCALE_STATUS_POLL_MS));
 
     const response = await fetch(resolvedStatusUrl, {
-      method: "GET",
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
       cache: "no-store",
     });
 
-    const text = await response.text();
-    let data: AsyncUpscaleResponse | null = null;
-
-    try {
-      data = text ? (JSON.parse(text) as AsyncUpscaleResponse) : null;
-    } catch {
-      data = null;
-    }
-
     if (!response.ok) {
-      throw new Error((data && data.error) || text || "Upscale status request failed");
+      const text = await response.text();
+      throw new Error(`Upscale status check failed (${response.status}): ${text}`);
     }
 
-    if (!data?.job) {
-      throw new Error("Upscale status response was missing job details");
-    }
-
+    const data = (await response.json()) as AsyncUpscaleResponse;
     latestJob = data.job;
+
     await applyUpscaleStatus(id, latestJob, {
       upstream: {
         async: true,
@@ -137,12 +113,13 @@ async function pollUpscaleStatus(id: string, apiUrl: string, apiKey: string, sta
   }
 
   throw new Error("Upscale status polling timed out");
+}
+
 export async function runUpscaleJob(id: string, sourceImageUrl: string) {
   const apiUrl = (getEnv("CODEX_TRYON_API_URL") ?? "https://codeximageapi.pixilens.online").replace(/\/$/, "");
-  console.log(`[upscale job ${id}] starting with apiUrl: ${apiUrl}`);
-
-  try {
   const apiKey = getEnv("CODEX_API_KEY");
+
+  console.log(`[upscale job ${id}] starting with apiUrl: ${apiUrl}`);
 
   if (!apiUrl) {
     await updateGalleryItem(id, {
