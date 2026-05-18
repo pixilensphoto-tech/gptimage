@@ -137,10 +137,11 @@ async function pollUpscaleStatus(id: string, apiUrl: string, apiKey: string, sta
   }
 
   throw new Error("Upscale status polling timed out");
-}
-
-async function runUpscaleJob(id: string, sourceImageUrl: string) {
+export async function runUpscaleJob(id: string, sourceImageUrl: string) {
   const apiUrl = (getEnv("CODEX_TRYON_API_URL") ?? "https://codeximageapi.pixilens.online").replace(/\/$/, "");
+  console.log(`[upscale job ${id}] starting with apiUrl: ${apiUrl}`);
+
+  try {
   const apiKey = getEnv("CODEX_API_KEY");
 
   if (!apiUrl) {
