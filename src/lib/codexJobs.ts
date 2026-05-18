@@ -34,6 +34,7 @@ export type CodexJob = {
 };
 
 const jobs = new Map<string, CodexJob>();
+const defaultAspectRatio = "9:16";
 
 function getEnv(key: string): string | undefined {
   const val = process.env[key];
@@ -213,10 +214,10 @@ async function runChainedTryOn(payload: CodexPayload, codexResult: CodexJobResul
   }
 
   const body = {
-    identityImages: [{ dataUrl: codexImageUrl }],
+    identityImages: [{ url: codexImageUrl }],
     outfitImage: payload.outfitImage,
     bypassCodex: true,
-    aspectRatio: typeof payload.aspectRatio === "string" ? payload.aspectRatio : undefined,
+    aspectRatio: typeof payload.aspectRatio === "string" && payload.aspectRatio.trim() ? payload.aspectRatio.trim() : defaultAspectRatio,
     name: typeof payload.name === "string" ? payload.name : undefined,
     category: typeof payload.category === "string" ? payload.category : undefined,
   };

@@ -36,6 +36,8 @@ const aspectRatioOptions = [
   "5:4",
 ];
 
+const defaultAspectRatio = aspectRatioOptions[0];
+
 const categoryOptions = [
   "Fashion Editorial",
   "Product Campaign",
@@ -106,11 +108,13 @@ function SelectField({
   value,
   options,
   onChange,
+  allowEmpty = true,
 }: {
   label: string;
   value: string;
   options: string[];
   onChange: (value: string) => void;
+  allowEmpty?: boolean;
 }) {
   return (
     <label className="block">
@@ -120,7 +124,7 @@ function SelectField({
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 w-full rounded-2xl border border-white/10 bg-black/30 py-3 pl-4 pr-12 text-sm text-white outline-none ring-cyan-300/40 transition focus:ring-4"
       >
-        <option value="">Auto / none</option>
+        {allowEmpty ? <option value="">Auto / none</option> : null}
         {options.map((option) => (
           <option key={option} value={option} className="bg-slate-950 text-white">
             {option}
@@ -193,7 +197,7 @@ export default function CodexPage() {
   const [backgroundFile, setBackgroundFile] = useState<PreviewFile | null>(null);
   const [bypassOutfit, setBypassOutfit] = useState(false);
   const [quality, setQuality] = useState(qualityOptions[1]);
-  const [aspectRatio, setAspectRatio] = useState(aspectRatioOptions[0]);
+  const [aspectRatio, setAspectRatio] = useState(defaultAspectRatio);
   const [category, setCategory] = useState("");
   const [scene, setScene] = useState("");
   const [style, setStyle] = useState("");
@@ -289,9 +293,11 @@ export default function CodexPage() {
       const poseDataUrl = poseFile ? await fileToBase64(poseFile.file) : undefined;
       const backgroundDataUrl = backgroundFile ? await fileToBase64(backgroundFile.file) : undefined;
 
+      const normalizedAspectRatio = aspectRatio.trim() || defaultAspectRatio;
+
       const payload: Record<string, unknown> = {
         quality,
-        aspectRatio,
+        aspectRatio: normalizedAspectRatio,
         bypassCodex: bypassOutfit,
       };
 
@@ -398,7 +404,7 @@ export default function CodexPage() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <SelectField label="Quality" value={quality} options={qualityOptions} onChange={setQuality} />
-              <SelectField label="Aspect Ratio" value={aspectRatio} options={aspectRatioOptions} onChange={setAspectRatio} />
+              <SelectField label="Aspect Ratio" value={aspectRatio} options={aspectRatioOptions} onChange={setAspectRatio} allowEmpty={false} />
               <SelectField label="Category" value={category} options={categoryOptions} onChange={setCategory} />
               <SelectField label="Scene" value={scene} options={sceneOptions} onChange={setScene} />
               <SelectField label="Style" value={style} options={styleOptions} onChange={setStyle} />

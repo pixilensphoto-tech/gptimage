@@ -1,0 +1,147 @@
+
+> gptimage@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.5 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.4.40:3000
+- Environments: .env.local
+✓ Ready in 149ms
+
+(node:90549) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+⨯ Error: self-signed certificate in certificate chain
+    at async ensureSchema (src/lib/galleryDb.ts:138:18)
+    at async listGalleryItems (src/lib/galleryDb.ts:246:3)
+    at async ImagesPage (src/app/images/page.tsx:41:17)
+  136 | async function ensureSchema() {
+  137 |   if (initialized) return;
+> 138 |   const client = await getPool().connect();
+      |                  ^
+  139 |   try {
+  140 |     await client.query("create schema if not exists codeximg");
+  141 |     await client.query(` {
+  code: 'SELF_SIGNED_CERT_IN_CHAIN',
+  digest: '1505138884'
+}
+ GET /images 500 in 160ms (next.js: 64ms, application-code: 96ms)
+✓ Compiled in 21ms
+ GET /images 200 in 293ms (next.js: 15ms, application-code: 278ms)
+ POST /api/codex/generate 202 in 127ms (next.js: 26ms, application-code: 101ms)
+ GET /images 200 in 36ms (next.js: 879µs, application-code: 35ms)
+[codex job ea6f3f95-d323-44e3-9f7b-16061f49564a] identityImages[0] must be an object with base64, dataUrl, or path
+ POST /api/codex/tryon 202 in 52ms (next.js: 13ms, application-code: 39ms)
+ GET /images 200 in 18ms (next.js: 999µs, application-code: 17ms)
+[tryon job 96958abd-6c29-4233-84ef-db86c16c960b] identityImages[0] must be an object with base64, dataUrl, or path
+ POST /api/codex/generate 202 in 73ms (next.js: 790µs, application-code: 73ms)
+ GET /api/codex/generate/d3d0baa9-b95b-47a0-b40a-ee6313d1b4d7 200 in 394ms (next.js: 390ms, application-code: 3ms)
+ GET /images 200 in 67ms (next.js: 1414µs, application-code: 65ms)
+ GET /api/codex/generate/d3d0baa9-b95b-47a0-b40a-ee6313d1b4d7 200 in 4ms (next.js: 2ms, application-code: 1878µs)
+ GET /api/codex/generate/d3d0baa9-b95b-47a0-b40a-ee6313d1b4d7 200 in 5ms (next.js: 3ms, application-code: 2ms)
+ GET /api/codex/generate/d3d0baa9-b95b-47a0-b40a-ee6313d1b4d7 200 in 11ms (next.js: 8ms, application-code: 3ms)
+ GET /api/codex/generate/d3d0baa9-b95b-47a0-b40a-ee6313d1b4d7 200 in 9ms (next.js: 5ms, application-code: 4ms)
+ GET /images 200 in 70ms (next.js: 817µs, application-code: 69ms)
+ POST /api/codex/generate 202 in 126ms (next.js: 3ms, application-code: 124ms)
+ GET /api/codex/generate/697f4ea4-1a24-4984-b7c7-15a2b9d3fa8f 200 in 4ms (next.js: 2ms, application-code: 1615µs)
+ GET /api/codex/generate/697f4ea4-1a24-4984-b7c7-15a2b9d3fa8f 200 in 11ms (next.js: 8ms, application-code: 4ms)
+ GET /api/codex/generate/697f4ea4-1a24-4984-b7c7-15a2b9d3fa8f 200 in 13ms (next.js: 6ms, application-code: 6ms)
+ GET /api/codex/generate/697f4ea4-1a24-4984-b7c7-15a2b9d3fa8f 200 in 15ms (next.js: 11ms, application-code: 4ms)
+ POST /api/codex/generate 202 in 113ms (next.js: 667µs, application-code: 112ms)
+ GET /api/codex/generate/03b06f6c-3a68-4d81-8015-92bd481a6751 200 in 4ms (next.js: 1942µs, application-code: 1789µs)
+ GET /api/codex/generate/03b06f6c-3a68-4d81-8015-92bd481a6751 200 in 4ms (next.js: 2ms, application-code: 1609µs)
+ GET /api/codex/generate/03b06f6c-3a68-4d81-8015-92bd481a6751 200 in 3ms (next.js: 1418µs, application-code: 1126µs)
+ GET /api/codex/generate/03b06f6c-3a68-4d81-8015-92bd481a6751 200 in 3ms (next.js: 2ms, application-code: 1306µs)
+ GET /api/codex/generate/03b06f6c-3a68-4d81-8015-92bd481a6751 200 in 3ms (next.js: 1485µs, application-code: 1440µs)
+✓ Compiled in 12ms
+ GET /images 200 in 94ms (next.js: 2ms, application-code: 92ms)
+ GET /images 200 in 87ms (next.js: 867µs, application-code: 86ms)
+ POST /api/codex/generate 202 in 155ms (next.js: 1403µs, application-code: 154ms)
+ GET /images 200 in 40ms (next.js: 1053µs, application-code: 39ms)
+ GET /images 200 in 39ms (next.js: 853µs, application-code: 38ms)
+ GET /api/codex/generate/8c7127ee-dbd6-4784-811e-a2a90a974aed 200 in 4ms (next.js: 2ms, application-code: 1483µs)
+ POST /api/codex/generate 202 in 154ms (next.js: 1020µs, application-code: 153ms)
+ GET /images 200 in 109ms (next.js: 1037µs, application-code: 108ms)
+ GET /api/codex/generate/a37c94be-4c96-4653-9901-8d889fb2db10 200 in 3ms (next.js: 1760µs, application-code: 1353µs)
+ GET /images 200 in 48ms (next.js: 779µs, application-code: 47ms)
+ GET /api/codex/generate/a37c94be-4c96-4653-9901-8d889fb2db10 200 in 4ms (next.js: 2ms, application-code: 1706µs)
+ GET /images 200 in 100ms (next.js: 924µs, application-code: 99ms)
+ GET /api/codex/generate/a37c94be-4c96-4653-9901-8d889fb2db10 200 in 8ms (next.js: 4ms, application-code: 4ms)
+✓ Compiled in 11ms
+ GET /outfitchange 200 in 378ms (next.js: 341ms, application-code: 37ms)
+ POST /api/codex/tryon 202 in 869ms (next.js: 3ms, application-code: 866ms)
+ GET /images 200 in 1087ms (next.js: 5ms, application-code: 1082ms)
+✓ Compiled in 12ms
+✓ Compiled in 12ms
+✓ Compiled in 51ms
+ GET /images 200 in 1218ms (next.js: 40ms, application-code: 1178ms)
+ DELETE /api/images/01ae43f4-16d6-48ab-98a1-c6df36c71e9a 200 in 1053ms (next.js: 444ms, application-code: 609ms)
+ GET /images 200 in 1065ms (next.js: 2ms, application-code: 1063ms)
+ GET /codex 200 in 52ms (next.js: 14ms, application-code: 38ms)
+ GET /codex 200 in 21ms (next.js: 1715µs, application-code: 19ms)
+ GET /outfitchange 200 in 28ms (next.js: 8ms, application-code: 20ms)
+ GET /codex 200 in 25ms (next.js: 3ms, application-code: 22ms)
+✓ Compiled in 11ms
+✓ Compiled in 12ms
+ GET /codex 200 in 24ms (next.js: 2ms, application-code: 21ms)
+ GET /codex 200 in 19ms (next.js: 1125µs, application-code: 18ms)
+ GET /codex 200 in 33ms (next.js: 4ms, application-code: 29ms)
+ GET /codex 200 in 29ms (next.js: 858µs, application-code: 28ms)
+ GET /codex 200 in 29ms (next.js: 1221µs, application-code: 27ms)
+ GET /codex 200 in 26ms (next.js: 725µs, application-code: 25ms)
+ GET /codex 200 in 31ms (next.js: 816µs, application-code: 30ms)
+ GET /codex 200 in 29ms (next.js: 1539µs, application-code: 28ms)
+ GET /codex 200 in 28ms (next.js: 1426µs, application-code: 26ms)
+ GET /codex 200 in 22ms (next.js: 1131µs, application-code: 21ms)
+ GET /codex 200 in 20ms (next.js: 920µs, application-code: 19ms)
+ GET /codex 200 in 20ms (next.js: 829µs, application-code: 19ms)
+ GET /codex 200 in 18ms (next.js: 840µs, application-code: 17ms)
+ GET /codex 200 in 20ms (next.js: 853µs, application-code: 19ms)
+ GET /codex 200 in 18ms (next.js: 746µs, application-code: 18ms)
+ GET /codex 200 in 19ms (next.js: 766µs, application-code: 18ms)
+ GET /codex 200 in 19ms (next.js: 789µs, application-code: 18ms)
+ GET /codex 200 in 19ms (next.js: 722µs, application-code: 18ms)
+ GET /codex 200 in 20ms (next.js: 1742µs, application-code: 18ms)
+ GET /codex 200 in 17ms (next.js: 815µs, application-code: 16ms)
+ GET /codex 200 in 19ms (next.js: 818µs, application-code: 19ms)
+ GET /codex 200 in 18ms (next.js: 701µs, application-code: 18ms)
+ GET /codex 200 in 20ms (next.js: 748µs, application-code: 19ms)
+ GET /codex 200 in 17ms (next.js: 790µs, application-code: 17ms)
+ GET /codex 200 in 18ms (next.js: 911µs, application-code: 17ms)
+ GET /codex 200 in 19ms (next.js: 760µs, application-code: 18ms)
+ GET /codex 200 in 19ms (next.js: 751µs, application-code: 18ms)
+ GET /codex 200 in 19ms (next.js: 702µs, application-code: 18ms)
+ GET /codex 200 in 18ms (next.js: 779µs, application-code: 17ms)
+ GET /codex 200 in 20ms (next.js: 890µs, application-code: 19ms)
+ GET /codex 200 in 19ms (next.js: 724µs, application-code: 19ms)
+ GET /codex 200 in 20ms (next.js: 782µs, application-code: 19ms)
+ GET /codex 200 in 16ms (next.js: 661µs, application-code: 16ms)
+ GET /codex 200 in 18ms (next.js: 1113µs, application-code: 17ms)
+ GET /codex 200 in 19ms (next.js: 640µs, application-code: 18ms)
+ GET /codex 200 in 20ms (next.js: 616µs, application-code: 19ms)
+ GET /codex 200 in 19ms (next.js: 822µs, application-code: 18ms)
+ GET /codex 200 in 17ms (next.js: 1026µs, application-code: 16ms)
+ GET /codex 200 in 19ms (next.js: 759µs, application-code: 18ms)
+ GET /codex 200 in 14ms (next.js: 738µs, application-code: 13ms)
+ GET /codex 200 in 8ms (next.js: 1038µs, application-code: 7ms)
+✓ Compiled in 23ms
+ GET /codex 200 in 8ms (next.js: 1071µs, application-code: 7ms)
+✓ Compiled in 14ms
+✓ Compiled in 27ms
+ GET /codex 200 in 56ms (next.js: 32ms, application-code: 24ms)
+ GET /codex 200 in 19ms (next.js: 832µs, application-code: 19ms)
+ GET /codex 200 in 22ms (next.js: 664µs, application-code: 21ms)
+ GET /codex 200 in 16ms (next.js: 1754µs, application-code: 14ms)
+ GET /codex 200 in 9ms (next.js: 978µs, application-code: 8ms)
+ GET /images 200 in 221ms (next.js: 9ms, application-code: 213ms)
+ POST /api/images/edd9bf04-02a4-44c8-9180-70c28cf3bc7d/upscale 202 in 575ms (next.js: 449ms, application-code: 126ms)
+ GET /images 200 in 152ms (next.js: 2ms, application-code: 149ms)
+  Reload env: .env.local
+ GET /images 200 in 195ms (next.js: 32ms, application-code: 162ms)
+[?25h
