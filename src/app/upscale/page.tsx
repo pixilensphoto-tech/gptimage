@@ -1,10 +1,13 @@
 import { upscaleAction } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default function UpscalePage() {
   return (
     <main className="min-h-screen bg-[#050816] text-white flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8 bg-white/[0.03] p-8 rounded-[2rem] border border-white/10 shadow-2xl backdrop-blur-xl">
         <div className="text-center">
+          <p className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-2">Beta</p>
           <h1 className="text-3xl font-black mb-2 animated-logo-text">Direct Upscale</h1>
           <p className="text-slate-400 text-sm">Upload an image to upscale it directly via RunningHub</p>
         </div>

@@ -3,7 +3,7 @@ import path from "node:path";
 import { Pool, type PoolConfig } from "pg";
 
 type GalleryStatus = "pending" | "processing" | "succeeded" | "failed";
-export type GalleryGenerator = "codex" | "tryon" | "codex_then_tryon" | "upscale" | "gpt2" | "azure" | "json";
+export type GalleryGenerator = "codex" | "tryon" | "codex_then_tryon" | "upscale" | "upscale_direct" | "gpt2" | "azure" | "json";
 
 type GalleryRowRecord = {
   id: string;

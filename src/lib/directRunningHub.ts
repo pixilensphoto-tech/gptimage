@@ -6,6 +6,7 @@ const UPSCALE_WORKFLOW_ID = "2056175041569673218";
 const UPSCALE_NODE_ID = 370;
 
 async function nativePost(url: string, payload: any): Promise<any> {
+  console.log(`!!!LOG!!! [rh:post] ${url}`);
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(payload);
     const req = https.request(
@@ -29,13 +30,17 @@ async function nativePost(url: string, payload: any): Promise<any> {
         });
       }
     );
-    req.on("error", reject);
+    req.on("error", (e) => {
+      console.error(`!!!LOG!!! [rh:post] error ${url}`, e);
+      reject(e);
+    });
     req.write(data);
     req.end();
   });
 }
 
 export async function uploadToRunningHub(fileBuffer: Buffer, fileName: string): Promise<string> {
+  console.log(`!!!LOG!!! [rh:upload] starting for ${fileName}`);
   const boundary = "----WebKitFormBoundary" + Math.random().toString(36).substring(2);
   const payload = Buffer.concat([
     Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="apiKey"\r\n\r\n${RUNNINGHUB_API_KEY}\r\n`),
@@ -60,15 +65,24 @@ export async function uploadToRunningHub(fileBuffer: Buffer, fileName: string): 
         res.on("end", () => {
           try {
             const result = JSON.parse(body);
-            if (result.code !== 0) reject(new Error(JSON.stringify(result)));
-            else resolve(result.data.fileName);
+            if (result.code !== 0) {
+               console.error(`!!!LOG!!! [rh:upload] failed code ${result.code}`, result);
+               reject(new Error(JSON.stringify(result)));
+            } else {
+              console.log(`!!!LOG!!! [rh:upload] success: ${result.data.fileName}`);
+              resolve(result.data.fileName);
+            }
           } catch (e) {
+            console.error(`!!!LOG!!! [rh:upload] parse error`, body);
             reject(new Error(body));
           }
         });
       }
     );
-    req.on("error", reject);
+    req.on("error", (e) => {
+      console.error(`!!!LOG!!! [rh:upload] request error`, e);
+      reject(e);
+    });
     req.write(payload);
     req.end();
   });
@@ -88,6 +102,7 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
 
       if (res.code !== 0) throw new Error(res.msg);
       const status = res.data;
+      console.log(`!!!LOG!!! [rh:poll] ${taskId} status: ${status}`);
 
       if (status === "SUCCESS") {
         const outputs = await nativePost("https://www.runninghub.ai/task/openapi/outputs", {
@@ -97,6 +112,7 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
         const url = outputs.data?.[0]?.fileUrl;
         if (!url) throw new Error("No output URL found");
 
+        console.log(`!!!LOG!!! [rh:poll] ${taskId} success URL: ${url}`);
         await updateGalleryItem(galleryId, {
           status: "succeeded",
           progress: 100,
@@ -113,7 +129,7 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
         message: `Processing: ${status}`,
       });
     } catch (e: any) {
-      console.error("[poll] error", e);
+      console.error("!!!LOG!!! [poll] error", e);
     }
   }
 
@@ -125,15 +141,20 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
 }
 
 export async function createDirectUpscaleTask(galleryId: string, rhFileName: string) {
+  console.log(`!!!LOG!!! [rh:create] starting for workflow ${UPSCALE_WORKFLOW_ID}`);
   const res = await nativePost("https://www.runninghub.ai/task/openapi/create", {
     workflowId: UPSCALE_WORKFLOW_ID,
     apiKey: RUNNINGHUB_API_KEY,
     nodeInfoList: [{ nodeId: UPSCALE_NODE_ID, fieldName: "image", fieldValue: rhFileName }],
   });
 
-  if (res.code !== 0) throw new Error(res.msg);
+  if (res.code !== 0) {
+    console.error(`!!!LOG!!! [rh:create] failed code ${res.code}`, res);
+    throw new Error(res.msg);
+  }
 
   const taskId = res.data.taskId;
+  console.log(`!!!LOG!!! [rh:create] success taskId: ${taskId}`);
   await updateGalleryItem(galleryId, {
     status: "processing",
     progress: 20,
