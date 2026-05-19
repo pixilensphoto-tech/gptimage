@@ -4,9 +4,19 @@ import { uploadToRunningHub, createDirectUpscaleTask } from "@/lib/directRunning
 
 export async function POST(_: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  const item = await getGalleryItem(id);
+  console.log(`[upscale API] Looking up item: ${id}`);
+
+  let item;
+  try {
+    item = await getGalleryItem(id);
+    console.log(`[upscale API] Found item:`, item ? { id: item.id, status: item.status, hasImageUrl: !!item.imageUrl } : null);
+  } catch (dbError) {
+    console.error(`[upscale API] DB error:`, dbError);
+    return NextResponse.json({ error: "Database error", details: dbError instanceof Error ? dbError.message : "Unknown" }, { status: 500 });
+  }
 
   if (!item) {
+    console.log(`[upscale API] Item not found: ${id}`);
     return NextResponse.json({ error: "Image not found" }, { status: 404 });
   }
 
