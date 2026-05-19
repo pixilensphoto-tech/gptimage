@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getGalleryItem, createGalleryItem, updateGalleryItem } from "@/lib/galleryDb";
 import { uploadToRunningHub, createDirectUpscaleTask } from "@/lib/directRunningHub";
+import https from "node:https";
 
 export async function POST(_: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -45,12 +46,19 @@ export async function POST(_: Request, context: { params: Promise<{ id: string }
         message: "Downloading source image",
       });
 
-      const imageResponse = await fetch(item.imageUrl!);
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download source image: ${imageResponse.status}`);
-      }
-
-      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+      // Download image using https (more reliable in containerized environments)
+      const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
+        https.get(item.imageUrl!, (res) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`Failed to download source image: ${res.statusCode}`));
+            return;
+          }
+          const chunks: Buffer[] = [];
+          res.on('data', chunk => chunks.push(chunk));
+          res.on('end', () => resolve(Buffer.concat(chunks)));
+          res.on('error', reject);
+        }).on('error', reject);
+      });
 
       // Upload to RunningHub
       await updateGalleryItem(upscaleItem.id, {

@@ -182,12 +182,19 @@ export async function pollRunningHubTask(galleryId: string, taskId: string) {
           message: "Uploading result to storage",
         });
 
-        const imageResponse = await fetch(rhUrl);
-        if (!imageResponse.ok) {
-          throw new Error(`Failed to download result: ${imageResponse.status}`);
-        }
-
-        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        // Download from RunningHub using https
+        const imageBuffer = await new Promise<Buffer>((resolve, reject) => {
+          https.get(rhUrl, (res) => {
+            if (res.statusCode !== 200) {
+              reject(new Error(`Failed to download result: ${res.statusCode}`));
+              return;
+            }
+            const chunks: Buffer[] = [];
+            res.on('data', chunk => chunks.push(chunk));
+            res.on('end', () => resolve(Buffer.concat(chunks)));
+            res.on('error', reject);
+          }).on('error', reject);
+        });
         const imgbbResult = await uploadToImgBB(imageBuffer);
 
         console.log(`!!!LOG!!! [rh:poll] ${taskId} ImgBB URL: ${imgbbResult.url}`);
