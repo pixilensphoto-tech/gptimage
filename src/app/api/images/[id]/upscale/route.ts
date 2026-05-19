@@ -4,28 +4,19 @@ import { uploadToRunningHub, createDirectUpscaleTask } from "@/lib/directRunning
 
 export async function POST(_: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
-  console.log(`[upscale API] Looking up item: ${id}`);
-
-  let item;
-  let dbErrorMessage: string | null = null;
-  try {
-    item = await getGalleryItem(id);
-    console.log(`[upscale API] Found item:`, item ? { id: item.id, status: item.status, hasImageUrl: !!item.imageUrl } : null);
-  } catch (dbError) {
-    dbErrorMessage = dbError instanceof Error ? dbError.message : "Unknown database error";
-    console.error(`[upscale API] DB error:`, dbError);
-  }
+  const item = await getGalleryItem(id);
 
   if (!item) {
-    console.log(`[upscale API] Item not found: ${id}`);
-    return NextResponse.json(
-      { error: "Image not found", id, dbError: dbErrorMessage },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Image not found" }, { status: 404 });
   }
 
   if (!item.imageUrl) {
     return NextResponse.json({ error: "This image does not have a source file to upscale yet" }, { status: 400 });
+  }
+
+  // Check if image URL is publicly accessible (not internal/private)
+  if (item.imageUrl.includes("150.220.93.109") || item.imageUrl.includes("localhost") || item.imageUrl.includes("127.0.0.1")) {
+    return NextResponse.json({ error: "Cannot upscale: source image is on an internal server and not publicly accessible" }, { status: 400 });
   }
 
   // Create gallery placeholder for upscale result
@@ -73,12 +64,19 @@ export async function POST(_: Request, context: { params: Promise<{ id: string }
       await createDirectUpscaleTask(upscaleItem.id, rhFileName);
     } catch (error) {
       const message = error instanceof Error ? error.message : "AI upscale failed";
+      const stack = error instanceof Error ? error.stack : undefined;
       console.error(`[upscale ${upscaleItem.id}]`, error);
       await updateGalleryItem(upscaleItem.id, {
         status: "failed",
         progress: 100,
         message: "Upscale failed",
         error: message,
+        metadata: {
+          source: { id: item.id, imageUrl: item.imageUrl },
+          errorDetails: message,
+          errorStack: stack,
+          failedAt: new Date().toISOString()
+        },
       });
     }
   })();
