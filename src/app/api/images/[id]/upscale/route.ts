@@ -7,17 +7,21 @@ export async function POST(_: Request, context: { params: Promise<{ id: string }
   console.log(`[upscale API] Looking up item: ${id}`);
 
   let item;
+  let dbErrorMessage: string | null = null;
   try {
     item = await getGalleryItem(id);
     console.log(`[upscale API] Found item:`, item ? { id: item.id, status: item.status, hasImageUrl: !!item.imageUrl } : null);
   } catch (dbError) {
+    dbErrorMessage = dbError instanceof Error ? dbError.message : "Unknown database error";
     console.error(`[upscale API] DB error:`, dbError);
-    return NextResponse.json({ error: "Database error", details: dbError instanceof Error ? dbError.message : "Unknown" }, { status: 500 });
   }
 
   if (!item) {
     console.log(`[upscale API] Item not found: ${id}`);
-    return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Image not found", id, dbError: dbErrorMessage },
+      { status: 404 }
+    );
   }
 
   if (!item.imageUrl) {
